@@ -74,6 +74,7 @@ func main1(args []string) error {
 	for _, t := range result {
 		if t.Retweeted {
 			fmt.Println("-------")
+			fmt.Println(t.CreatedAt)
 			fmt.Println(t.FullText)
 			api.DeleteTweet(t.Id, false)
 		}
