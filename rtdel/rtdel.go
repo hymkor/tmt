@@ -1,56 +1,24 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/ChimeraCoder/anaconda"
+	"github.com/zetamatta/experimental/mytwitter"
 )
 
 var from = flag.String("f", "", "ID that seek tweet from")
 var session = flag.String("s", "", "Filename to keep session")
 
-type Setting struct {
-	ScreenName        string
-	AccessToken       string
-	AccessTokenSecret string
-	ConsumerKey       string
-	ConsumerSecret    string
-}
-
-func GetSetting() (*Setting, error) {
-	exename, err := os.Executable()
-	if err != nil {
-		return nil, err
-	}
-
-	cfgname := exename[:len(exename)-len(filepath.Ext(exename))] + ".json"
-
-	tokenText, err := ioutil.ReadFile(cfgname)
-	if err != nil {
-		return nil, err
-	}
-
-	var tk Setting
-	err = json.Unmarshal(tokenText, &tk)
-	return &tk, err
-}
-
 func main1(args []string) error {
-	tk, err := GetSetting()
+	api, tk, err := mytwitter.Login()
 	if err != nil {
 		return err
 	}
-
-	api := anaconda.NewTwitterApiWithCredentials(
-		tk.AccessToken, tk.AccessTokenSecret,
-		tk.ConsumerKey, tk.ConsumerSecret)
 	defer api.Close()
 
 	v := url.Values{"screen_name": {tk.ScreenName}}
