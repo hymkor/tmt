@@ -15,7 +15,7 @@ var from = flag.String("f", "", "ID that seek tweet from")
 var session = flag.String("s", "", "Filename to keep session")
 
 func main1(args []string) error {
-	api, tk, err := mytwitter.Login()
+	api, tk, err := Login()
 	if err != nil {
 		return err
 	}
