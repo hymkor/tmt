@@ -1,4 +1,4 @@
-package mytwitter
+package tmaint
 
 import (
 	"encoding/json"

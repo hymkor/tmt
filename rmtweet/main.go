@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zetamatta/experimental/mytwitter"
+	"github.com/zetamatta/go-tmaint"
 )
 
 var sleepSecond = flag.Int64("ss", 1, "sleep seconds")
 
-func rmTweets(api *mytwitter.Api, r io.Reader) {
+func rmTweets(api *tmaint.Api, r io.Reader) {
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		idStr := strings.TrimSpace(sc.Text())
@@ -38,7 +38,7 @@ func rmTweets(api *mytwitter.Api, r io.Reader) {
 }
 
 func main1(args []string) error {
-	api, _, err := mytwitter.Login()
+	api, _, err := tmaint.Login()
 	if err != nil {
 		return err
 	}

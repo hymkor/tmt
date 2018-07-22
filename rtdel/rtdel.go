@@ -8,14 +8,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zetamatta/experimental/mytwitter"
+	"github.com/zetamatta/go-tmaint"
 )
 
 var from = flag.String("f", "", "ID that seek tweet from")
 var session = flag.String("s", "", "Filename to keep session")
 
 func main1(args []string) error {
-	api, tk, err := Login()
+	api, tk, err := tmaint.Login()
 	if err != nil {
 		return err
 	}
