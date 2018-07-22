@@ -44,7 +44,9 @@ func GetSetting() (*Setting, error) {
 	return &tk, err
 }
 
-func Login() (*anaconda.TwitterApi, *Setting, error) {
+type Api = anaconda.TwitterApi
+
+func Login() (*Api, *Setting, error) {
 	tk, err := GetSetting()
 	if err != nil {
 		return nil, nil, err
