@@ -18,8 +18,10 @@ func main1(args []string) error {
 	defer api.Close()
 
 	switch args[0] {
-	case "follow":
-		return follow(api, args[1:])
+	case "lsfollow":
+		return lsfollow(api, args[1:])
+	case "dofollow":
+		return dofollow(api, args[1:])
 	default:
 	}
 	return nil

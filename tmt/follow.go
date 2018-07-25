@@ -1,12 +1,39 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	tw "github.com/zetamatta/go-tmaint"
+	"os"
+	"regexp"
 	"time"
+
+	tw "github.com/zetamatta/go-tmaint"
 )
 
-func follow(api *tw.Api, args []string) error {
+var rxScreenName = regexp.MustCompile(`@\w+`)
+
+func dofollow(api *tw.Api, args []string) error {
+	sc := bufio.NewScanner(os.Stdin)
+	i := 0
+	for sc.Scan() {
+		match1 := rxScreenName.FindString(sc.Text())
+		if match1 != "" {
+			screenName := match1[1:]
+			u, err := api.FollowUser(screenName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %s\n", screenName, err.Error())
+			} else {
+				i++
+				fmt.Printf("%6d %s @%s %s\n", i, u.IdStr, u.ScreenName, u.Name)
+				os.Stdout.Sync()
+			}
+			time.Sleep(time.Second * time.Duration(3))
+		}
+	}
+	return nil
+}
+
+func lsfollow(api *tw.Api, args []string) error {
 	pageCh := api.GetFollowersListAll(nil)
 	i := 0
 	for p := range pageCh {
@@ -15,11 +42,11 @@ func follow(api *tw.Api, args []string) error {
 		}
 		for _, u := range p.Followers {
 			i++
-			fmt.Printf("%6d %s %s %s\n", i, u.IdStr, u.ScreenName, u.Name)
-			time.Sleep(time.Second)
+			fmt.Printf("%6d %s @%s %s\n", i, u.IdStr, u.ScreenName, u.Name)
+			os.Stdout.Sync()
+			time.Sleep(time.Second * time.Duration(3))
 		}
 		fmt.Println()
-		time.Sleep(time.Minute)
 	}
 	return nil
 }
