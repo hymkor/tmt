@@ -1,6 +1,7 @@
 package tmaint
 
 import (
+	"flag"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -26,13 +27,19 @@ func FilePathChangeExtension(path, newext string) string {
 	}
 }
 
-func GetSetting() (*Setting, error) {
-	exename, err := os.Executable()
-	if err != nil {
-		return nil, err
-	}
+var account = flag.String("a", "", "account json")
 
-	cfgname := FilePathChangeExtension(exename, ".json")
+func GetSetting() (*Setting, error) {
+	var cfgname string
+	if *account != "" {
+		cfgname = *account
+	} else {
+		exename, err := os.Executable()
+		if err != nil {
+			return nil, err
+		}
+		cfgname = FilePathChangeExtension(exename, ".json")
+	}
 
 	tokenText, err := ioutil.ReadFile(cfgname)
 	if err != nil {
