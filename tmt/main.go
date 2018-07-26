@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -22,13 +23,17 @@ func main1(args []string) error {
 		return lsfollow(api, args[1:])
 	case "dofollow":
 		return dofollow(api, args[1:])
+	case "cat":
+		return cat(api, args[1:])
 	default:
+		return fmt.Errorf("%s: no such sub-command", args[0])
 	}
 	return nil
 }
 
 func main() {
-	if err := main1(os.Args[1:]); err != nil {
+	flag.Parse()
+	if err := main1(flag.Args()); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
