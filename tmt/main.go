@@ -15,9 +15,10 @@ type subCommandT struct {
 }
 
 var subcommands = map[string]*subCommandT{
-	"followers": {followers, " ... list members you are followed"},
-	"follow":    {follow, "... follow person listed in STDIN"},
-	"dump":      {dump, "IDNum ... dump JSON for the tweet"},
+	"followers":  {followers, " ... list members you are followed"},
+	"followings": {followings, " ... list members you follows"},
+	"follow":     {follow, "... follow person listed in STDIN"},
+	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
 }
 
 func main1(args []string) error {
