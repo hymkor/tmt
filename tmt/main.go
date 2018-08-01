@@ -9,8 +9,26 @@ import (
 	"github.com/zetamatta/go-tmaint/secret"
 )
 
+type subCommandT struct {
+	F func(*tmaint.Api, []string) error
+	U string
+}
+
+var subcommands = map[string]*subCommandT{
+	"followers": {followers, " ... list members you are followed"},
+	"follow":    {follow, "... follow person listed in STDIN"},
+	"dump":      {dump, "IDNum ... dump JSON for the tweet"},
+}
+
 func main1(args []string) error {
 	if len(args) <= 0 {
+		exename, err := os.Executable()
+		if err == nil {
+			fmt.Fprintf(os.Stderr, "Usage:\n %s SUBCOMMAND ...\n", exename)
+		}
+		for name, value := range subcommands {
+			fmt.Fprintf(os.Stderr, "\t%s %s\n", name, value.U)
+		}
 		return nil
 	}
 	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
@@ -19,17 +37,11 @@ func main1(args []string) error {
 	}
 	defer api.Close()
 
-	switch args[0] {
-	case "lsfollow":
-		return lsfollow(api, args[1:])
-	case "dofollow":
-		return dofollow(api, args[1:])
-	case "cat":
-		return cat(api, args[1:])
-	default:
+	subcommand1, ok := subcommands[args[0]]
+	if !ok {
 		return fmt.Errorf("%s: no such sub-command", args[0])
 	}
-	return nil
+	return subcommand1.F(api, args[1:])
 }
 
 func main() {

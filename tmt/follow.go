@@ -12,7 +12,7 @@ import (
 
 var rxScreenName = regexp.MustCompile(`@\w+`)
 
-func dofollow(api *tw.Api, args []string) error {
+func follow(api *tw.Api, args []string) error {
 	sc := bufio.NewScanner(os.Stdin)
 	i := 0
 	for sc.Scan() {
@@ -33,7 +33,7 @@ func dofollow(api *tw.Api, args []string) error {
 	return nil
 }
 
-func lsfollow(api *tw.Api, args []string) error {
+func followers(api *tw.Api, args []string) error {
 	pageCh := api.GetFollowersListAll(nil)
 	i := 0
 	for p := range pageCh {

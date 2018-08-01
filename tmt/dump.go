@@ -12,7 +12,7 @@ import (
 
 var rxNumber = regexp.MustCompile(`\d+`)
 
-func cat(api *tw.Api, args []string) error {
+func dump(api *tw.Api, args []string) error {
 	for i, arg1 := range args {
 		if i > 0 {
 			time.Sleep(time.Second * time.Duration(3))
