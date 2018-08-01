@@ -10,7 +10,7 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 )
 
-type Access struct {
+type accessT struct {
 	AccessToken       string
 	AccessTokenSecret string
 }
@@ -30,7 +30,7 @@ func FilePathChangeExtension(path, newext string) string {
 
 var account = flag.String("a", "", "account json")
 
-func GetSetting() (*Access, error) {
+func getAccess(consumerKey, consumerSecret string) (*accessT, error) {
 	var cfgname string
 	if *account != "" {
 		cfgname = *account
@@ -41,7 +41,7 @@ func GetSetting() (*Access, error) {
 		}
 		cfgname = FilePathChangeExtension(exename, ".json")
 	}
-	var access Access
+	var access accessT
 	tokenText, err := ioutil.ReadFile(cfgname)
 	if err != nil {
 		access.AccessToken, access.AccessTokenSecret, err = PinOAuth(
@@ -69,15 +69,14 @@ func GetSetting() (*Access, error) {
 
 type Api = anaconda.TwitterApi
 
-func Login() (*Api, *Setting, error) {
-	access, err := GetSetting()
+func Login(consumerKey, consumerSecret string) (*Api, error) {
+	access, err := getAccess(consumerKey, consumerSecret)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return anaconda.NewTwitterApiWithCredentials(
-			access.AccessToken,
-			access.AccessTokenSecret,
-			consumerKey,
-			consumerSecret),
-		&Setting{}, nil
+		access.AccessToken,
+		access.AccessTokenSecret,
+		consumerKey,
+		consumerSecret), nil
 }

@@ -9,19 +9,20 @@ import (
 	"strings"
 
 	"github.com/zetamatta/go-tmaint"
+	"github.com/zetamatta/go-tmaint/secret"
 )
 
 var from = flag.String("f", "", "ID that seek tweet from")
 var session = flag.String("s", "", "Filename to keep session")
 
 func main1(args []string) error {
-	api, tk, err := tmaint.Login()
+	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
 	if err != nil {
 		return err
 	}
 	defer api.Close()
 
-	v := url.Values{"screen_name": {tk.ScreenName}}
+	v := url.Values{}
 
 	if *session != "" {
 		data, err := ioutil.ReadFile(*session)

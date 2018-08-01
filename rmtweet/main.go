@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zetamatta/go-tmaint"
+	"github.com/zetamatta/go-tmaint/secret"
 )
 
 var sleepSecond = flag.Int64("ss", 1, "sleep seconds")
@@ -20,6 +21,9 @@ func rmTweets(api *tmaint.Api, r io.Reader) {
 	for sc.Scan() {
 		idStr := strings.TrimSpace(sc.Text())
 		idStr = strings.Trim(idStr, `"`)
+		if idStr == "" {
+			continue
+		}
 		idNum, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", idStr, err.Error())
@@ -38,7 +42,7 @@ func rmTweets(api *tmaint.Api, r io.Reader) {
 }
 
 func main1(args []string) error {
-	api, _, err := tmaint.Login()
+	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
 	if err != nil {
 		return err
 	}

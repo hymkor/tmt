@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"os"
 
-	tw "github.com/zetamatta/go-tmaint"
+	"github.com/zetamatta/go-tmaint"
+	"github.com/zetamatta/go-tmaint/secret"
 )
 
 func main1(args []string) error {
 	if len(args) <= 0 {
 		return nil
 	}
-	api, _, err := tw.Login()
+	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
 	if err != nil {
 		return err
 	}
