@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"regexp"
 	"time"
@@ -41,7 +42,7 @@ func listUsersSlowly(users []anaconda.User) {
 	for _, u := range users {
 		showUser(&u)
 		os.Stdout.Sync()
-		time.Sleep(time.Second * time.Duration(3))
+		time.Sleep(time.Second * time.Duration(rand.Intn(100)) / 10)
 	}
 }
 
