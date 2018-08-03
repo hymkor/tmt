@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	tw "github.com/zetamatta/go-tmaint"
+	tw "github.com/zetamatta/tmt/oauth"
 )
 
 var rxNumber = regexp.MustCompile(`\d+`)

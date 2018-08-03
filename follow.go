@@ -9,7 +9,7 @@ import (
 
 	"github.com/ChimeraCoder/anaconda"
 
-	tw "github.com/zetamatta/go-tmaint"
+	tw "github.com/zetamatta/tmt/oauth"
 )
 
 var rxScreenName = regexp.MustCompile(`@\w+`)

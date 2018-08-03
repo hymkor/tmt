@@ -1,82 +1,55 @@
-package tmaint
+package main
 
 import (
-	"encoding/json"
 	"flag"
-	"io/ioutil"
+	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/ChimeraCoder/anaconda"
+	tmaint "github.com/zetamatta/tmt/oauth"
+	"github.com/zetamatta/tmt/secret"
 )
 
-type accessT struct {
-	AccessToken       string
-	AccessTokenSecret string
+type subCommandT struct {
+	F func(*tmaint.Api, []string) error
+	U string
 }
 
-type Setting struct {
-	ScreenName string
+var subcommands = map[string]*subCommandT{
+	"followers":  {followers, " ... list members you are followed"},
+	"followings": {followings, " ... list members you follows"},
+	"follow":     {follow, "... follow person listed in STDIN"},
+	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
 }
 
-func FilePathChangeExtension(path, newext string) string {
-	basename := path[:len(path)-len(filepath.Ext(path))]
-	if newext[0] == '.' {
-		return basename + newext
-	} else {
-		return basename + "." + newext
-	}
-}
-
-var account = flag.String("a", "", "account json")
-
-func getAccess(consumerKey, consumerSecret string) (*accessT, error) {
-	var cfgname string
-	if *account != "" {
-		cfgname = *account
-	} else {
+func main1(args []string) error {
+	if len(args) <= 0 {
 		exename, err := os.Executable()
-		if err != nil {
-			return nil, err
+		if err == nil {
+			fmt.Fprintf(os.Stderr, "Usage:\n %s SUBCOMMAND ...\n", exename)
 		}
-		cfgname = FilePathChangeExtension(exename, ".json")
+		for name, value := range subcommands {
+			fmt.Fprintf(os.Stderr, "\t%s %s\n", name, value.U)
+		}
+		return nil
 	}
-	var access accessT
-	tokenText, err := ioutil.ReadFile(cfgname)
+	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
 	if err != nil {
-		access.AccessToken, access.AccessTokenSecret, err = PinOAuth(
-			consumerKey,
-			consumerSecret,
-			url2pin)
-		if err != nil {
-			return nil, err
-		}
-
-		bin, err := json.Marshal(&access)
-		if err != nil {
-			return nil, err
-		}
-
-		err = ioutil.WriteFile(cfgname, bin, 0666)
-		if err != nil {
-			return nil, err
-		}
-	} else if err = json.Unmarshal(tokenText, &access); err != nil {
-		return nil, err
+		return err
 	}
-	return &access, nil
+	defer api.Close()
+
+	subcommand1, ok := subcommands[args[0]]
+	if !ok {
+		return fmt.Errorf("%s: no such sub-command", args[0])
+	}
+	return subcommand1.F(api, args[1:])
 }
 
-type Api = anaconda.TwitterApi
-
-func Login(consumerKey, consumerSecret string) (*Api, error) {
-	access, err := getAccess(consumerKey, consumerSecret)
-	if err != nil {
-		return nil, err
+func main() {
+	flag.Parse()
+	if err := main1(flag.Args()); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
 	}
-	return anaconda.NewTwitterApiWithCredentials(
-		access.AccessToken,
-		access.AccessTokenSecret,
-		consumerKey,
-		consumerSecret), nil
+	os.Exit(0)
 }

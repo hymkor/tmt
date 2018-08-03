@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zetamatta/go-tmaint"
-	"github.com/zetamatta/go-tmaint/secret"
+	tmaint "github.com/zetamatta/tmt/oauth"
+	"github.com/zetamatta/tmt/secret"
 )
 
 var sleepSecond = flag.Int64("ss", 1, "sleep seconds")
