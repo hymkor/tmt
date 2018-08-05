@@ -47,5 +47,5 @@ func Setup(_ctx context.Context) (context.Context, func()) {
 	signal.Notify(sigint, os.Interrupt)
 	go sigint2cancel(sigint, quit, cancel)
 
-	return ctx, func() { quit <- struct{}{}; close(sigint); close(quit) }
+	return ctx, func() { quit <- struct{}{}; cancel(); close(sigint); close(quit) }
 }
