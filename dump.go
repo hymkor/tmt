@@ -1,21 +1,23 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/zetamatta/tmt/ctrlc"
 	tw "github.com/zetamatta/tmt/oauth"
 )
 
 var rxNumber = regexp.MustCompile(`\d+`)
 
-func dump(api *tw.Api, args []string) error {
+func dump(ctx context.Context, api *tw.Api, args []string) error {
 	for i, arg1 := range args {
-		if i > 0 {
-			time.Sleep(time.Second * time.Duration(3))
+		if i > 0 && ctrlc.Sleep(ctx, time.Second*time.Duration(3)) {
+			return ctx.Err()
 		}
 		idStr := rxNumber.FindString(arg1)
 		if idStr == "" {

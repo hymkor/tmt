@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ChimeraCoder/anaconda"
 
+	"github.com/zetamatta/tmt/ctrlc"
 	tw "github.com/zetamatta/tmt/oauth"
 )
 
@@ -19,7 +21,7 @@ func showUser(u *anaconda.User) {
 	fmt.Printf("ID:%s\tScreenName:@%s\tName:%s\n", u.IdStr, u.ScreenName, u.Name)
 }
 
-func follow(api *tw.Api, args []string) error {
+func follow(ctx context.Context, api *tw.Api, args []string) error {
 	sc := bufio.NewScanner(os.Stdin)
 	for sc.Scan() {
 		match1 := rxScreenName.FindString(sc.Text())
@@ -32,39 +34,48 @@ func follow(api *tw.Api, args []string) error {
 				showUser(&u)
 				os.Stdout.Sync()
 			}
-			time.Sleep(time.Second * time.Duration(3))
+			if ctrlc.Sleep(ctx, time.Second*time.Duration(rand.Intn(100))/10) {
+				return ctx.Err()
+			}
 		}
 	}
 	return nil
 }
 
-func listUsersSlowly(users []anaconda.User) {
+func listUsersSlowly(ctx context.Context, users []anaconda.User) error {
 	for _, u := range users {
 		showUser(&u)
 		os.Stdout.Sync()
-		time.Sleep(time.Second * time.Duration(rand.Intn(100)) / 10)
+		if ctrlc.Sleep(ctx, time.Second*time.Duration(3)) {
+			return ctx.Err()
+		}
 	}
+	return nil
 }
 
-func followers(api *tw.Api, args []string) error {
+func followers(ctx context.Context, api *tw.Api, args []string) error {
 	pageCh := api.GetFollowersListAll(nil)
 	for p := range pageCh {
 		if p.Error != nil {
 			return p.Error
 		}
-		listUsersSlowly(p.Followers)
+		if err := listUsersSlowly(ctx, p.Followers); err != nil {
+			return err
+		}
 		fmt.Println()
 	}
 	return nil
 }
 
-func followings(api *tw.Api, args []string) error {
+func followings(ctx context.Context, api *tw.Api, args []string) error {
 	pageCh := api.GetFriendsListAll(nil)
 	for p := range pageCh {
 		if p.Error != nil {
 			return p.Error
 		}
-		listUsersSlowly(p.Friends)
+		if err := listUsersSlowly(ctx, p.Friends); err != nil {
+			return err
+		}
 	}
 	return nil
 }

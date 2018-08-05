@@ -1,16 +1,18 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 
+	"github.com/zetamatta/tmt/ctrlc"
 	tmaint "github.com/zetamatta/tmt/oauth"
 	"github.com/zetamatta/tmt/secret"
 )
 
 type subCommandT struct {
-	F func(*tmaint.Api, []string) error
+	F func(context.Context, *tmaint.Api, []string) error
 	U string
 }
 
@@ -42,7 +44,10 @@ func main1(args []string) error {
 	if !ok {
 		return fmt.Errorf("%s: no such sub-command", args[0])
 	}
-	return subcommand1.F(api, args[1:])
+	ctx, closer := ctrlc.Setup(context.Background())
+	rc := subcommand1.F(ctx, api, args[1:])
+	closer()
+	return rc
 }
 
 func main() {
