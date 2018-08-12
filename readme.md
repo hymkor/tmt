@@ -13,6 +13,8 @@ How to build
 ------------
 
 ```
+$ go get github.com/zetamatta/tmt
+$ cd ~/go/src/github.com/zetamatta/tmt
 $ cd secret
 $ cp secret.go.sample secret.go
 $ vim secret.go
@@ -29,6 +31,7 @@ Write the values you get from https://apps.twitter.com/ , and
 
 ```
 $ cd ..
+$ go get ./...
 $ go build
 ```
 
