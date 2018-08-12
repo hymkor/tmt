@@ -1,4 +1,4 @@
-tmt.exe - Twitter Maintenance Tool
+tmt - Twitter Maintenance Tool
 ==============================
 
 * `tmt followers`  ... list members you are followed
