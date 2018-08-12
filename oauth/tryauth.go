@@ -3,9 +3,9 @@ package tmaint
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 
 	"github.com/garyburd/go-oauth/oauth"
+	"github.com/toqueteos/webbrowser"
 )
 
 const outOfBound = "oob"
@@ -36,8 +36,9 @@ func PinOAuth(consumerKey string, consumerSecret string, pinInput func(url strin
 }
 
 func openUrl(url string) {
-	cmd := exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
-	cmd.Run()
+	// cmd := exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
+	// cmd.Run()
+	webbrowser.Open(url)
 }
 
 func url2pin(url string) (pin string) {
