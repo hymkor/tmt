@@ -21,6 +21,7 @@ var subcommands = map[string]*subCommandT{
 	"followings": {followings, " ... list members you follows"},
 	"follow":     {follow, "... follow person listed in STDIN"},
 	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
+	"post":       {post, "... post tweet from STDIN"},
 }
 
 func main1(args []string) error {
