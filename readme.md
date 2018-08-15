@@ -7,7 +7,7 @@ tmt - Twitter Maintenance Tool
 * `tmt dump IDNUM` ... dump JSON for the tweet
 * `tmt post` ... tweet the contents of STDIN (utf8)
 
-At first you runs tmt.exe , your default web-browser shows PIN number.
+At first you runs `tmt` , your default web-browser shows PIN number.
 You have to write it into STDIN of tmt.exe.
 
 How to build
