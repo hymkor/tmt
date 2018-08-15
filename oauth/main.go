@@ -30,16 +30,24 @@ func FilePathChangeExtension(path, newext string) string {
 
 var account = flag.String("a", "", "account json")
 
+func ConfigurationPath() (string, error) {
+	exename, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return FilePathChangeExtension(exename, ".json"), nil
+}
+
 func getAccess(consumerKey, consumerSecret string) (*accessT, error) {
 	var cfgname string
 	if *account != "" {
 		cfgname = *account
 	} else {
-		exename, err := os.Executable()
+		var err error
+		cfgname, err = ConfigurationPath()
 		if err != nil {
 			return nil, err
 		}
-		cfgname = FilePathChangeExtension(exename, ".json")
 	}
 	var access accessT
 	tokenText, err := ioutil.ReadFile(cfgname)

@@ -19,7 +19,7 @@ type subCommandT struct {
 var subcommands = map[string]*subCommandT{
 	"followers":  {followers, " ... list members you are followed"},
 	"followings": {followings, " ... list members you follows"},
-	"follow":     {follow, "... follow person listed in STDIN"},
+	"follow":     {follow, "... follow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)"},
 	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
 	"post":       {post, "... post tweet from STDIN"},
 }
@@ -28,10 +28,15 @@ func main1(args []string) error {
 	if len(args) <= 0 {
 		exename, err := os.Executable()
 		if err == nil {
-			fmt.Fprintf(os.Stderr, "Usage:\n %s SUBCOMMAND ...\n", exename)
+			fmt.Fprintf(os.Stderr, "Usage:\n  %s COMMAND...\n", exename)
 		}
 		for name, value := range subcommands {
 			fmt.Fprintf(os.Stderr, "\t%s %s\n", name, value.U)
+		}
+		if cfgPath, err := tmaint.ConfigurationPath(); err != nil {
+			return err
+		} else {
+			fmt.Fprintf(os.Stderr, "Your configuration is saved on\n  %s\n", cfgPath)
 		}
 		return nil
 	}
