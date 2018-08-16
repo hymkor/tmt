@@ -46,6 +46,10 @@ func follow(ctx context.Context, api *tw.Api, args []string) error {
 	return doUsers(ctx, api.FollowUser)
 }
 
+func unfollow(ctx context.Context, api *tw.Api, args []string) error {
+	return doUsers(ctx, api.UnfollowUser)
+}
+
 func listUsersSlowly(ctx context.Context, users []anaconda.User) error {
 	for _, u := range users {
 		showUser(&u)

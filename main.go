@@ -20,6 +20,7 @@ var subcommands = map[string]*subCommandT{
 	"followers":  {followers, " ... list members you are followed"},
 	"followings": {followings, " ... list members you follows"},
 	"follow":     {follow, "... follow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)"},
+	"unfollow":   {unfollow, "... unfollow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)"},
 	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
 	"post":       {post, "... post tweet from STDIN"},
 }
