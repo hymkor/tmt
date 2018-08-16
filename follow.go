@@ -21,13 +21,13 @@ func showUser(u *anaconda.User) {
 	fmt.Printf("ID:%s\tScreenName:@%s\tName:%s\n", u.IdStr, u.ScreenName, u.Name)
 }
 
-func follow(ctx context.Context, api *tw.Api, args []string) error {
+func doUsers(ctx context.Context, f func(name string) (anaconda.User, error)) error {
 	sc := bufio.NewScanner(os.Stdin)
 	for sc.Scan() {
 		match1 := rxScreenName.FindString(sc.Text())
 		if match1 != "" {
 			screenName := match1[1:]
-			u, err := api.FollowUser(screenName)
+			u, err := f(screenName)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%s: %s\n", screenName, err.Error())
 			} else {
@@ -40,6 +40,10 @@ func follow(ctx context.Context, api *tw.Api, args []string) error {
 		}
 	}
 	return nil
+}
+
+func follow(ctx context.Context, api *tw.Api, args []string) error {
+	return doUsers(ctx, api.FollowUser)
 }
 
 func listUsersSlowly(ctx context.Context, users []anaconda.User) error {
