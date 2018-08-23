@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/mattn/go-isatty"
 
 	"github.com/zetamatta/tmt/ctrlc"
 	tw "github.com/zetamatta/tmt/oauth"
@@ -22,7 +23,12 @@ func showUser(u *anaconda.User) {
 }
 
 func doUsers(ctx context.Context, f func(name string) (anaconda.User, error)) error {
+	prompt := isatty.IsTerminal(os.Stdin.Fd())
+
 	sc := bufio.NewScanner(os.Stdin)
+	if prompt {
+		fmt.Print("> ")
+	}
 	for sc.Scan() {
 		match1 := rxScreenName.FindString(sc.Text())
 		if match1 != "" {
@@ -36,6 +42,9 @@ func doUsers(ctx context.Context, f func(name string) (anaconda.User, error)) er
 			}
 			if ctrlc.Sleep(ctx, time.Second*time.Duration(rand.Intn(100))/10) {
 				return ctx.Err()
+			}
+			if prompt {
+				fmt.Print("> ")
 			}
 		}
 	}
