@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/mattn/go-isatty"
+
 	tw "github.com/zetamatta/tmt/oauth"
 )
 
@@ -18,7 +20,7 @@ var ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
 func post(ctx context.Context, api *tw.Api, args []string) error {
 	var text []byte
 	editor := os.Getenv("EDITOR")
-	if editor != "" {
+	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
 		fname := filepath.Join(os.TempDir(), "post.txt")
 		if err := ioutil.WriteFile(fname, ByteOrderMark, 066); err != nil {
 			return err
