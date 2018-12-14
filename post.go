@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -27,6 +28,9 @@ func post(ctx context.Context, api *tw.Api, args []string) error {
 		cmd.Stdout = os.Stdout
 		cmd.Stdin = os.Stdin
 		cmd.Run()
+		if !cmd.ProcessState.Success() {
+			return errors.New("canceled.")
+		}
 		var buffer bytes.Buffer
 		fd, err := os.Open(fname)
 		if err != nil {
