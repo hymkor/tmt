@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	"github.com/mattn/go-isatty"
 
@@ -18,6 +20,10 @@ import (
 var ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
 
 func post(ctx context.Context, api *tw.Api, args []string) error {
+	return postWithValue(ctx, api, nil)
+}
+
+func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 	var text []byte
 	editor := os.Getenv("EDITOR")
 	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
@@ -56,6 +62,29 @@ func post(ctx context.Context, api *tw.Api, args []string) error {
 			return err
 		}
 	}
-	_, err := api.PostTweet(string(text), nil)
+	_, err := api.PostTweet(string(text), values)
 	return err
+}
+
+func cont(ctx context.Context, api *tw.Api, args []string) error {
+	u, err := api.GetSelf(nil)
+	if err != nil {
+		return err
+	}
+	values := url.Values{}
+	values.Add("screen_name", u.ScreenName)
+
+	timeline, err := api.GetUserTimeline(values)
+	if err != nil {
+		return err
+	}
+
+	if len(timeline) <= 0 {
+		return errors.New("too few timelins")
+	}
+
+	values = url.Values{}
+	values.Add("in_reply_to_status_id", strconv.FormatInt(timeline[0].Id, 10))
+
+	return postWithValue(ctx, api, values)
 }

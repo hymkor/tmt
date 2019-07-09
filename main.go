@@ -23,6 +23,7 @@ var subcommands = map[string]*subCommandT{
 	"unfollow":   {unfollow, "... unfollow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)"},
 	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
 	"post":       {post, "... post tweet from STDIN"},
+	"cont":       {cont, "... post continued tweet from STDIN"},
 }
 
 func main1(args []string) error {
