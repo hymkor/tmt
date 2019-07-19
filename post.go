@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"flag"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -23,9 +24,14 @@ func post(ctx context.Context, api *tw.Api, args []string) error {
 	return postWithValue(ctx, api, nil)
 }
 
+var flagEditor = flag.String("editor", "", "editor to use")
+
 func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 	var text []byte
-	editor := os.Getenv("EDITOR")
+	editor := *flagEditor
+	if editor == "" {
+		editor = os.Getenv("EDITOR")
+	}
 	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
 		fname := filepath.Join(os.TempDir(), "post.txt")
 		if err := ioutil.WriteFile(fname, ByteOrderMark, 066); err != nil {
