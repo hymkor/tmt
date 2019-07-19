@@ -24,6 +24,7 @@ var subcommands = map[string]*subCommandT{
 	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
 	"post":       {post, "... post tweet from STDIN"},
 	"cont":       {cont, "... post continued tweet from STDIN"},
+	"whoami":     {whoami, "... show who are you"},
 }
 
 func main1(args []string) error {
