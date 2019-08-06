@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -45,22 +44,12 @@ func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 		if !cmd.ProcessState.Success() {
 			return errors.New("canceled.")
 		}
-		var buffer bytes.Buffer
-		fd, err := os.Open(fname)
+		var err error
+		text, err = ioutil.ReadFile(fname)
 		if err != nil {
 			return err
 		}
-		defer fd.Close()
-		sc := bufio.NewScanner(fd)
-		for sc.Scan() {
-			line := sc.Bytes()
-			line = bytes.Replace(line, ByteOrderMark, []byte{}, -1)
-			buffer.Write(line)
-		}
-		if err := sc.Err(); err != nil {
-			return err
-		}
-		text = buffer.Bytes()
+		text = bytes.Replace(text, ByteOrderMark, []byte{}, -1)
 	} else {
 		var err error
 		text, err = ioutil.ReadAll(os.Stdin)
