@@ -25,6 +25,14 @@ func catTweet(t anaconda.Tweet, bon, boff string, w io.Writer) {
 	fmt.Fprintf(w, "%sFrom:%s\t%s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
 	if t.InReplyToScreenName != "" {
 		fmt.Fprintf(w, "%sTo:%s\t@%s\n", bon, boff, t.InReplyToScreenName)
+		if t.InReplyToStatusIdStr != "" {
+			fmt.Fprintf(w,
+				"%sIn-Reply-To:%s https://twitter.com/%s/status/%s\n",
+				bon,
+				boff,
+				t.InReplyToScreenName,
+				t.InReplyToStatusIdStr)
+		}
 	}
 	fmt.Fprintf(w, "%sDate:%s\t%s\n", bon, boff, globalTimeToLocal(t.CreatedAt))
 	fmt.Fprintln(w)
