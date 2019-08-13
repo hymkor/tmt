@@ -31,7 +31,7 @@ var flagEditor = flag.String("editor", "", "editor to use")
 
 func makeDraft() (string, error) {
 	fname := filepath.Join(os.TempDir(), "post.txt")
-	if err := ioutil.WriteFile(fname, ByteOrderMark, 066); err != nil {
+	if err := ioutil.WriteFile(fname, ByteOrderMark, 0600); err != nil {
 		return "", err
 	}
 	return fname, nil
