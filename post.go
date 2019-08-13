@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -25,6 +26,30 @@ func post(ctx context.Context, api *tw.Api, args []string) error {
 
 var flagEditor = flag.String("editor", "", "editor to use")
 
+func makeDraft() (string, error) {
+	fname := filepath.Join(os.TempDir(), "post.txt")
+	if err := ioutil.WriteFile(fname, ByteOrderMark, 066); err != nil {
+		return "", err
+	}
+	return fname, nil
+}
+
+func callEditor(editor, fname string) ([]byte, error) {
+	cmd := exec.Command(editor, fname)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Run()
+	if !cmd.ProcessState.Success() {
+		return nil, errors.New("canceled.")
+	}
+	text, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.Replace(text, ByteOrderMark, []byte{}, -1), nil
+}
+
 func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 	var text []byte
 	editor := *flagEditor
@@ -32,33 +57,37 @@ func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 		editor = os.Getenv("EDITOR")
 	}
 	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
-		fname := filepath.Join(os.TempDir(), "post.txt")
-		if err := ioutil.WriteFile(fname, ByteOrderMark, 066); err != nil {
-			return err
-		}
-		cmd := exec.Command(editor, fname)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		cmd.Stdin = os.Stdin
-		cmd.Run()
-		if !cmd.ProcessState.Success() {
-			return errors.New("canceled.")
-		}
-		var err error
-		text, err = ioutil.ReadFile(fname)
+		fname, err := makeDraft()
 		if err != nil {
 			return err
 		}
-		text = bytes.Replace(text, ByteOrderMark, []byte{}, -1)
+		text, err = callEditor(editor, fname)
+		if err != nil {
+			return err
+		}
+		for {
+			_, err := api.PostTweet(string(text), values)
+			if err == nil {
+				return nil
+			}
+			fmt.Fprintln(os.Stderr, err.Error())
+			fmt.Fprintln(os.Stderr, "Hit ENTER-key to retry.")
+			var dummy [100]byte
+			os.Stdin.Read(dummy[:])
+			text, err = callEditor(editor, fname)
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		var err error
 		text, err = ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
+		_, err = api.PostTweet(string(text), values)
+		return err
 	}
-	_, err := api.PostTweet(string(text), values)
-	return err
 }
 
 func cont(ctx context.Context, api *tw.Api, args []string) error {
