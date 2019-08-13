@@ -21,7 +21,12 @@ func globalTimeToLocal(org string) string {
 	return dt.Local().Format(_TIME_LAYOUT)
 }
 
-func catTweet(t anaconda.Tweet, bon, boff string, w io.Writer) {
+func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
+	if t.RetweetedStatus != nil {
+		fmt.Fprintf(w, "%sRetweeted-By%s:\t%s <@%s>\n",
+			bon, boff, t.User.Name, t.User.ScreenName)
+		t = t.RetweetedStatus
+	}
 	fmt.Fprintf(w, "%sFrom:%s\t%s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
 	fmt.Fprintf(w, "%sMessage-ID:%s\thttps://twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
 	if t.InReplyToScreenName != "" {
@@ -48,7 +53,7 @@ func timeline(_ context.Context, api *anaconda.TwitterApi, args []string) error 
 	}
 	w := colorable.NewColorableStdout()
 	for i := len(timeline); i > 0; i-- {
-		catTweet(timeline[i-1], "\x1B[0;32;1m", "\x1B[0m", w)
+		catTweet(&timeline[i-1], "\x1B[0;32;1m", "\x1B[0m", w)
 	}
 	return nil
 }
