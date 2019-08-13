@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/mattn/go-colorable"
 )
 
 const _TIME_LAYOUT = "Mon Jan 02 15:04:05 -0700 2006"
@@ -21,12 +21,12 @@ func globalTimeToLocal(org string) string {
 	return dt.Local().Format(_TIME_LAYOUT)
 }
 
-func catTweet(t anaconda.Tweet, w io.Writer) {
-	fmt.Fprintf(w, "From:\t%s <@%s>\n", t.User.Name, t.User.ScreenName)
+func catTweet(t anaconda.Tweet, bon, boff string, w io.Writer) {
+	fmt.Fprintf(w, "%sFrom:%s\t%s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
 	if t.InReplyToScreenName != "" {
-		fmt.Fprintf(w, "To:\t@%s\n", t.InReplyToScreenName)
+		fmt.Fprintf(w, "%sTo:%s\t@%s\n", bon, boff, t.InReplyToScreenName)
 	}
-	fmt.Fprintf(w, "Date:\t%s\n", globalTimeToLocal(t.CreatedAt))
+	fmt.Fprintf(w, "%sDate:%s\t%s\n", bon, boff, globalTimeToLocal(t.CreatedAt))
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, t.FullText)
 	fmt.Fprintln(w, ".")
@@ -37,8 +37,9 @@ func timeline(_ context.Context, api *anaconda.TwitterApi, args []string) error 
 	if err != nil {
 		return err
 	}
+	w := colorable.NewColorableStdout()
 	for i := len(timeline); i > 0; i-- {
-		catTweet(timeline[i-1], os.Stdout)
+		catTweet(timeline[i-1], "\x1B[0;32;1m", "\x1B[0m", w)
 	}
 	return nil
 }
