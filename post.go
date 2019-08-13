@@ -6,13 +6,16 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	// "reflect"
 	"strconv"
 
+	"github.com/ChimeraCoder/anaconda"
 	"github.com/mattn/go-isatty"
 
 	tw "github.com/zetamatta/tmt/oauth"
@@ -20,7 +23,7 @@ import (
 
 var ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
 
-func post(ctx context.Context, api *tw.Api, args []string) error {
+func post(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	return postWithValue(ctx, api, nil)
 }
 
@@ -50,8 +53,18 @@ func callEditor(editor, fname string) ([]byte, error) {
 	return bytes.Replace(text, ByteOrderMark, []byte{}, -1), nil
 }
 
+func dumpTwitterError(err error, w io.Writer) {
+	if apierr, ok := err.(*anaconda.ApiError); ok {
+		for _, e := range apierr.Decoded.Errors {
+			fmt.Fprintf(w, "%d: %s\n", e.Code, e.Message)
+		}
+	} else {
+		//fmt.Fprintln(os.Stderr, reflect.TypeOf(err).String())
+		fmt.Fprintln(w, err.Error())
+	}
+}
+
 func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
-	var text []byte
 	editor := *flagEditor
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
@@ -61,7 +74,7 @@ func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 		if err != nil {
 			return err
 		}
-		text, err = callEditor(editor, fname)
+		text, err := callEditor(editor, fname)
 		if err != nil {
 			return err
 		}
@@ -70,8 +83,8 @@ func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 			if err == nil {
 				return nil
 			}
-			fmt.Fprintln(os.Stderr, err.Error())
-			fmt.Fprintln(os.Stderr, "Hit ENTER-key to retry.")
+			dumpTwitterError(err, os.Stderr)
+			fmt.Fprintln(os.Stderr, "Hit [Enter] to retry.")
 			var dummy [100]byte
 			os.Stdin.Read(dummy[:])
 			text, err = callEditor(editor, fname)
@@ -80,8 +93,7 @@ func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 			}
 		}
 	} else {
-		var err error
-		text, err = ioutil.ReadAll(os.Stdin)
+		text, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -90,7 +102,7 @@ func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
 	}
 }
 
-func cont(ctx context.Context, api *tw.Api, args []string) error {
+func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	u, err := api.GetSelf(nil)
 	if err != nil {
 		return err
