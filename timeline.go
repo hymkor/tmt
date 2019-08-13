@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -20,6 +21,8 @@ func globalTimeToLocal(org string) string {
 	}
 	return dt.Local().Format(_TIME_LAYOUT)
 }
+
+var rxDotsLine = regexp.MustCompile(`(?m)^\.+$`)
 
 func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 	if t.RetweetedStatus != nil {
@@ -42,7 +45,9 @@ func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 	}
 	fmt.Fprintf(w, "%sDate:%s\t%s\n", bon, boff, globalTimeToLocal(t.CreatedAt))
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, t.FullText)
+	fmt.Fprintln(w, rxDotsLine.ReplaceAllStringFunc(t.FullText, func(s string) string {
+		return s + "."
+	}))
 	fmt.Fprintln(w, ".")
 }
 
