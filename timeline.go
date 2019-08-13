@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -19,22 +21,24 @@ func globalTimeToLocal(org string) string {
 	return dt.Local().Format(_TIME_LAYOUT)
 }
 
+func catTweet(t anaconda.Tweet, w io.Writer) {
+	fmt.Fprintf(w, "From:\t%s <@%s>\n", t.User.Name, t.User.ScreenName)
+	if t.InReplyToScreenName != "" {
+		fmt.Fprintf(w, "To:\t@%s\n", t.InReplyToScreenName)
+	}
+	fmt.Fprintf(w, "Date:\t%s\n", globalTimeToLocal(t.CreatedAt))
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, t.FullText)
+	fmt.Fprintln(w, ".")
+}
+
 func timeline(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timeline, err := api.GetHomeTimeline(url.Values{})
 	if err != nil {
 		return err
 	}
 	for i := len(timeline); i > 0; i-- {
-		t := timeline[i-1]
-
-		fmt.Printf("From:\t%s <@%s>\n", t.User.Name, t.User.ScreenName)
-		if t.InReplyToScreenName != "" {
-			fmt.Printf("To:\t@%s\n", t.InReplyToScreenName)
-		}
-		fmt.Printf("Date:\t%s\n", globalTimeToLocal(t.CreatedAt))
-		fmt.Println()
-		fmt.Println(t.FullText)
-		fmt.Println(".")
+		catTweet(timeline[i-1], os.Stdout)
 	}
 	return nil
 }
