@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
+	"os/exec"
 	"regexp"
 	"time"
 
@@ -51,12 +53,29 @@ func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 	fmt.Fprintln(w, ".")
 }
 
+func callPager() (io.Writer, func(), error) {
+	callPager := os.Getenv("Pager")
+	if callPager == "" {
+		return colorable.NewColorableStdout(), func() {}, nil
+	}
+	cmd := exec.Command(callPager)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	out, err := cmd.StdinPipe()
+	if err != nil {
+		return colorable.NewColorableStdout(), func() {}, err
+	}
+	cmd.Start()
+	return out, func() { out.Close(); cmd.Wait() }, nil
+}
+
 func timeline(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timeline, err := api.GetHomeTimeline(url.Values{})
 	if err != nil {
 		return err
 	}
-	w := colorable.NewColorableStdout()
+	w, closer, _ := callPager()
+	defer closer()
 	for i := len(timeline); i > 0; i-- {
 		catTweet(&timeline[i-1], "\x1B[0;32;1m", "\x1B[0m", w)
 	}
