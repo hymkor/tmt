@@ -27,6 +27,7 @@ var subcommands = map[string]*subCommandT{
 	"whoami":     {whoami, "... show who are you"},
 	"timeline":   {timeline, "... get home timeline"},
 	"mention":    {mention, "... get mention timeline"},
+	"reply":      {reply, "IDNum ... reply to IDNum"},
 }
 
 func main1(args []string) error {

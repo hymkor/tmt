@@ -124,3 +124,13 @@ func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 
 	return postWithValue(ctx, api, values)
 }
+
+func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
+	if len(args) <= 0 {
+		return errors.New("required tweet ID")
+	}
+
+	values := url.Values{}
+	values.Add("in_reply_to_status_id", args[0])
+	return postWithValue(ctx, api, values)
+}
