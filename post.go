@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	// "reflect"
 	"strconv"
 
@@ -125,12 +126,17 @@ func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	return postWithValue(api, values)
 }
 
+var rxSuffixID = regexp.MustCompile(`\d+$`)
+
 func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	if len(args) <= 0 {
 		return errors.New("required tweet ID")
 	}
-
+	m := rxSuffixID.FindString(args[0])
+	if m == "" {
+		return errors.New("required string contains tweet ID")
+	}
 	values := url.Values{}
-	values.Add("in_reply_to_status_id", args[0])
+	values.Add("in_reply_to_status_id", m)
 	return postWithValue(api, values)
 }
