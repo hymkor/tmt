@@ -28,24 +28,24 @@ var rxDotsLine = regexp.MustCompile(`(?m)^\.+$`)
 
 func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 	if t.RetweetedStatus != nil {
-		fmt.Fprintf(w, "%sRetweeted-By%s:\t%s <@%s>\n",
+		fmt.Fprintf(w, "%sRetweeted-By%s: %s <@%s>\n",
 			bon, boff, t.User.Name, t.User.ScreenName)
 		t = t.RetweetedStatus
 	}
-	fmt.Fprintf(w, "%sFrom:%s\t%s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
-	fmt.Fprintf(w, "%sMessage-ID:%s\thttps://twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
+	fmt.Fprintf(w, "%sFrom:%s %s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
+	fmt.Fprintf(w, "%sMessage-ID:%s twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
 	if t.InReplyToScreenName != "" {
-		fmt.Fprintf(w, "%sTo:%s\t@%s\n", bon, boff, t.InReplyToScreenName)
+		fmt.Fprintf(w, "%sTo:%s @%s\n", bon, boff, t.InReplyToScreenName)
 		if t.InReplyToStatusIdStr != "" {
 			fmt.Fprintf(w,
-				"%sIn-Reply-To:%s\thttps://twitter.com/%s/status/%s\n",
+				"%sIn-Reply-To:%s twitter.com/%s/status/%s\n",
 				bon,
 				boff,
 				t.InReplyToScreenName,
 				t.InReplyToStatusIdStr)
 		}
 	}
-	fmt.Fprintf(w, "%sDate:%s\t%s\n", bon, boff, globalTimeToLocal(t.CreatedAt))
+	fmt.Fprintf(w, "%sDate:%s %s\n", bon, boff, globalTimeToLocal(t.CreatedAt))
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, rxDotsLine.ReplaceAllStringFunc(t.FullText, func(s string) string {
 		return s + "."
