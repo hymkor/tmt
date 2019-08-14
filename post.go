@@ -24,7 +24,7 @@ import (
 var ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
 
 func post(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
-	return postWithValue(ctx, api, nil)
+	return postWithValue(api, nil)
 }
 
 var flagEditor = flag.String("editor", "", "editor to use")
@@ -64,7 +64,7 @@ func dumpTwitterError(err error, w io.Writer) {
 	}
 }
 
-func postWithValue(ctx context.Context, api *tw.Api, values url.Values) error {
+func postWithValue(api *tw.Api, values url.Values) error {
 	editor := *flagEditor
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
@@ -122,7 +122,7 @@ func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	values = url.Values{}
 	values.Add("in_reply_to_status_id", strconv.FormatInt(timeline[0].Id, 10))
 
-	return postWithValue(ctx, api, values)
+	return postWithValue(api, values)
 }
 
 func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
@@ -132,5 +132,5 @@ func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 
 	values := url.Values{}
 	values.Add("in_reply_to_status_id", args[0])
-	return postWithValue(ctx, api, values)
+	return postWithValue(api, values)
 }
