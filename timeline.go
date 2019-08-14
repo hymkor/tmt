@@ -69,15 +69,28 @@ func callPager() (io.Writer, func(), error) {
 	return out, func() { out.Close(); cmd.Wait() }, nil
 }
 
+func showTimeline(timeline []anaconda.Tweet) {
+	w, closer, _ := callPager()
+	for i := len(timeline); i > 0; i-- {
+		catTweet(&timeline[i-1], "\x1B[0;32;1m", "\x1B[0m", w)
+	}
+	closer()
+}
+
 func timeline(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timeline, err := api.GetHomeTimeline(url.Values{})
 	if err != nil {
 		return err
 	}
-	w, closer, _ := callPager()
-	defer closer()
-	for i := len(timeline); i > 0; i-- {
-		catTweet(&timeline[i-1], "\x1B[0;32;1m", "\x1B[0m", w)
+	showTimeline(timeline)
+	return nil
+}
+
+func mention(_ context.Context, api *anaconda.TwitterApi, args []string) error {
+	timeline, err := api.GetMentionsTimeline(url.Values{})
+	if err != nil {
+		return err
 	}
+	showTimeline(timeline)
 	return nil
 }
