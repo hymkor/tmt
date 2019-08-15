@@ -94,3 +94,12 @@ func mention(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	showTimeline(timeline)
 	return nil
 }
+
+func said(_ context.Context, api *anaconda.TwitterApi, args []string) error {
+	timeline, err := myTimeline(api)
+	if err != nil {
+		return err
+	}
+	showTimeline(timeline)
+	return nil
+}

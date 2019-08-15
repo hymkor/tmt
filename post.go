@@ -103,24 +103,26 @@ func postWithValue(api *tw.Api, values url.Values) error {
 	}
 }
 
-func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
+func myTimeline(api *anaconda.TwitterApi) ([]anaconda.Tweet, error) {
 	u, err := api.GetSelf(nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	values := url.Values{}
 	values.Add("screen_name", u.ScreenName)
 
-	timeline, err := api.GetUserTimeline(values)
+	return api.GetUserTimeline(values)
+}
+
+func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
+	timeline, err := myTimeline(api)
 	if err != nil {
 		return err
 	}
-
 	if len(timeline) <= 0 {
 		return errors.New("too few timelins")
 	}
-
-	values = url.Values{}
+	values := url.Values{}
 	values.Add("in_reply_to_status_id", strconv.FormatInt(timeline[0].Id, 10))
 
 	return postWithValue(api, values)
