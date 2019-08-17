@@ -1,12 +1,21 @@
 tmt - Twitter Maintenance Tool
 ==============================
 
-* `tmt followers`  ... list members you are followed
-* `tmt followings`  ... list members you follows
-* `tmt follow` ... follow person listed in STDIN
-* `tmt unfollow` ... follow person listed in STDIN
-* `tmt dump IDNUM` ... dump JSON for the tweet
-* `tmt post` ... tweet the contents of STDIN (utf8)
+* show timeline
+    * `tmt timeline` ... get home timeline
+    * `tmt mention` ... get mention timeline
+    * `tmt said` ... show what I said
+    * `tmt dump IDNum` ... dump JSON for the tweet
+* post
+    * `tmt post` ... tweet the contents of STDIN (utf8)
+    * `tmt cont` ... tweet in the same thread as the last tweeting
+    * `tmt reply IDNum` ... reply to IDNum
+* maintainance
+    * `tmt followers`  ... list members you are followed
+    * `tmt followings`  ... list members you follows
+    * `tmt follow` ... follow person listed in STDIN
+    * `tmt unfollow` ... follow person listed in STDIN
+    * `tmt whoami` ... show who are you
 
 At first you runs `tmt` , your default web-browser shows PIN number.
 You have to write it into STDIN of tmt.exe.
