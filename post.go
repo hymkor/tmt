@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	// "reflect"
 	"strconv"
 
@@ -22,7 +23,7 @@ import (
 	tw "github.com/zetamatta/tmt/oauth"
 )
 
-var ByteOrderMark = []byte{0xEF, 0xBB, 0xBF}
+var byteOrderMark = "\xEF\xBB\xBF"
 
 func post(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	return postWithValue(api, nil)
@@ -30,9 +31,9 @@ func post(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 
 var flagEditor = flag.String("editor", "", "editor to use")
 
-func makeDraft() (string, error) {
+func makeDraft(text string) (string, error) {
 	fname := filepath.Join(os.TempDir(), "post.txt")
-	if err := ioutil.WriteFile(fname, ByteOrderMark, 0600); err != nil {
+	if err := ioutil.WriteFile(fname, []byte(byteOrderMark+text), 0600); err != nil {
 		return "", err
 	}
 	return fname, nil
@@ -51,7 +52,7 @@ func callEditor(editor, fname string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bytes.Replace(text, ByteOrderMark, []byte{}, -1), nil
+	return bytes.Replace(text, []byte(byteOrderMark), []byte{}, -1), nil
 }
 
 func dumpTwitterError(err error, w io.Writer) {
@@ -66,12 +67,16 @@ func dumpTwitterError(err error, w io.Writer) {
 }
 
 func postWithValue(api *tw.Api, values url.Values) error {
+	return doPost(api, "", values)
+}
+
+func doPost(api *tw.Api, draft string, values url.Values) error {
 	editor := *flagEditor
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
 	}
 	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
-		fname, err := makeDraft()
+		fname, err := makeDraft(draft)
 		if err != nil {
 			return err
 		}
@@ -138,7 +143,24 @@ func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	if m == "" {
 		return errors.New("required string contains tweet ID")
 	}
+
+	id, err := strconv.ParseInt(m, 10, 64)
+	tweet, err := api.GetTweet(id, nil)
+	if err != nil {
+		return err
+	}
+	var draft strings.Builder
+	var t *anaconda.Tweet
+	if tweet.RetweetedStatus != nil {
+		t = tweet.RetweetedStatus
+	} else {
+		t = &tweet
+	}
+	fmt.Fprintf(&draft, "@%s ", t.User.ScreenName)
+	if t.InReplyToScreenName != "" {
+		fmt.Fprintf(&draft, "@%s ", t.InReplyToScreenName)
+	}
 	values := url.Values{}
 	values.Add("in_reply_to_status_id", m)
-	return postWithValue(api, values)
+	return doPost(api, draft.String(), values)
 }
