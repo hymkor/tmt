@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"html"
 	"io"
 	"net/url"
 	"os"
@@ -53,9 +54,9 @@ func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 		fmt.Fprintf(w, "%sFavorite-Count:%s %d\n", bon, boff, t.FavoriteCount)
 	}
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, rxDotsLine.ReplaceAllStringFunc(t.FullText, func(s string) string {
+	fmt.Fprintln(w, html.UnescapeString(rxDotsLine.ReplaceAllStringFunc(t.FullText, func(s string) string {
 		return s + "."
-	}))
+	})))
 	fmt.Fprintln(w, ".")
 }
 
