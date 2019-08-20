@@ -46,6 +46,12 @@ func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 		}
 	}
 	fmt.Fprintf(w, "%sDate:%s %s\n", bon, boff, globalTimeToLocal(t.CreatedAt))
+	if t.RetweetCount >= 1 {
+		fmt.Fprintf(w, "%sRetweet-Count:%s %d\n", bon, boff, t.RetweetCount)
+	}
+	if t.FavoriteCount >= 1 {
+		fmt.Fprintf(w, "%sFavorite-Count:%s %d\n", bon, boff, t.FavoriteCount)
+	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, rxDotsLine.ReplaceAllStringFunc(t.FullText, func(s string) string {
 		return s + "."
