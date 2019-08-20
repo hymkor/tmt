@@ -33,7 +33,6 @@ func sigint2cancel(sigint chan os.Signal, quit chan struct{}, cancel func()) {
 		cancel()
 		return
 	case <-quit:
-		println("quit")
 		return
 	}
 }
