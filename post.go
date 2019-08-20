@@ -164,3 +164,18 @@ func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	values.Add("in_reply_to_status_id", m)
 	return doPost(api, draft.String(), values)
 }
+
+func retweet(_ context.Context, api *anaconda.TwitterApi, args []string) error {
+	for _, idStr := range args {
+		m := rxSuffixID.FindString(idStr)
+		if m == "" {
+			return fmt.Errorf("%s: invalid ID", idStr)
+		}
+		id, err := strconv.ParseInt(m, 10, 64)
+		if err != nil {
+			return fmt.Errorf("%s: %s", idStr, err.Error())
+		}
+		api.Retweet(id, false)
+	}
+	return nil
+}
