@@ -47,10 +47,26 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	for {
 		var nextaction func() error
 		err := twopane.View{
-			Rows:  rows,
-			Clear: true,
+			Rows: rows,
 			Handler: func(param *twopane.Param) bool {
 				switch param.Key {
+				case "t":
+					if row, ok := rows[param.Cursor].(*rowT); ok {
+						api.Retweet(row.Tweet.Id, false)
+						fmt.Fprint(param.Out, "\n[Retweeted]")
+					}
+					return true
+				case "T":
+					if row, ok := rows[param.Cursor].(*rowT); ok {
+						var buffer strings.Builder
+						fmt.Fprintf(&buffer,
+							"https://twitter.com/%s/status/%s\n%s",
+							row.Tweet.User.ScreenName,
+							row.Tweet.IdStr,
+							row.Tweet.FullText)
+						doPost(api, buffer.String(), nil)
+					}
+					return true
 				case "n":
 					postWithValue(api, nil)
 					return true
