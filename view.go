@@ -29,8 +29,8 @@ func (row *rowT) Contents() []string {
 	return row.contents
 }
 
-func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
-	timeline, err := api.GetHomeTimeline(url.Values{})
+func viewTimeline(getTimeline func() ([]anaconda.Tweet, error)) error {
+	timeline, err := getTimeline()
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				switch key {
 				case "r", "R", "\x12":
 					nextaction = func() error {
-						timeline, err := api.GetHomeTimeline(url.Values{})
+						timeline, err := getTimeline()
 						if err != nil {
 							return err
 						}
@@ -81,4 +81,8 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			return err
 		}
 	}
+}
+
+func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
+	return viewTimeline(func()([]anaconda.Tweet,error){ return api.GetHomeTimeline(url.Values{}) })
 }
