@@ -29,18 +29,56 @@ func (row *rowT) Contents() []string {
 	return row.contents
 }
 
-func viewTimeline(timeline []anaconda.Tweet, handler func(*twopane.View, string) bool) error {
-	rows := make([]twopane.Row, 0, len(timeline))
-	for i := range timeline {
-		rows = append(rows, &rowT{Tweet: &timeline[i]})
-	}
-	return twopane.View{Rows: rows, Clear: true, Handler: handler}.Run()
-}
-
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timeline, err := api.GetHomeTimeline(url.Values{})
 	if err != nil {
 		return err
 	}
-	return viewTimeline(timeline, nil)
+	rows := make([]twopane.Row, 0, len(timeline))
+	uniq := make(map[string]struct{})
+	for i, t := range timeline {
+		rows = append(rows, &rowT{Tweet: &timeline[i]})
+		uniq[t.IdStr] = struct{}{}
+	}
+	for {
+		var nextaction func() error
+		err := twopane.View{
+			Rows:  rows,
+			Clear: true,
+			Handler: func(_ *twopane.View, key string) bool {
+				switch key {
+				case "r", "R", "\x12":
+					nextaction = func() error {
+						timeline, err := api.GetHomeTimeline(url.Values{})
+						if err != nil {
+							return err
+						}
+						newrows := make([]twopane.Row, 0, len(timeline)+len(rows))
+						for i, t := range timeline {
+							if _, ok := uniq[t.IdStr]; ok {
+								continue
+							}
+							uniq[t.IdStr] = struct{}{}
+							newrows = append(newrows, &rowT{Tweet: &timeline[i]})
+						}
+						rows = append(newrows, rows...)
+						return nil
+					}
+					return false
+				default:
+					return true
+				}
+			},
+		}.Run()
+
+		if err != nil {
+			return err
+		}
+		if nextaction == nil {
+			return nil
+		}
+		if err := nextaction(); err != nil {
+			return err
+		}
+	}
 }
