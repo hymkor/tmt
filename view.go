@@ -42,7 +42,8 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	uniq := make(map[string]struct{})
 	for i, t := range timeline {
 		rows = append(rows, &rowT{Tweet: &timeline[i]})
-		uniq[t.IdStr] = struct{}{}
+		key := t.IdStr + t.User.ScreenName
+		uniq[key] = struct{}{}
 	}
 	for {
 		var nextaction func() error
@@ -78,10 +79,11 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 						}
 						newrows := make([]twopane.Row, 0, len(timeline)+len(rows))
 						for i, t := range timeline {
-							if _, ok := uniq[t.IdStr]; ok {
+							key := t.IdStr + t.User.ScreenName
+							if _, ok := uniq[key]; ok {
 								continue
 							}
-							uniq[t.IdStr] = struct{}{}
+							uniq[key] = struct{}{}
 							newrows = append(newrows, &rowT{Tweet: &timeline[i]})
 						}
 						rows = append(newrows, rows...)
