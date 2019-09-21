@@ -29,6 +29,10 @@ func (row *rowT) Contents() []string {
 	return row.contents
 }
 
+const (
+	CTRL_R = "\x12"
+)
+
 func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet, error)) error {
 	timeline, err := getTimeline()
 	if err != nil {
@@ -50,7 +54,7 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 				case "n":
 					postWithValue(api, nil)
 					return true
-				case "r", "R", "\x12":
+				case ".", CTRL_R:
 					nextaction = func() error {
 						timeline, err := getTimeline()
 						if err != nil {
