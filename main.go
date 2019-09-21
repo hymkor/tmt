@@ -30,6 +30,7 @@ var subcommands = map[string]*subCommandT{
 	"reply":      {reply, "IDNum ... reply to IDNum"},
 	"said":       {said, "... show what I said"},
 	"retweet":    {retweet, "IDNum"},
+	"view":       {view, ".. start viewer"},
 }
 
 func main1(args []string) error {
