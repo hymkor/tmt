@@ -49,8 +49,8 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 		err := twopane.View{
 			Rows:  rows,
 			Clear: true,
-			Handler: func(_ *twopane.View, key string) bool {
-				switch key {
+			Handler: func(param *twopane.Param) bool {
+				switch param.Key {
 				case "n":
 					postWithValue(api, nil)
 					return true
