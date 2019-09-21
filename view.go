@@ -29,7 +29,7 @@ func (row *rowT) Contents() []string {
 	return row.contents
 }
 
-func viewTimeline(getTimeline func() ([]anaconda.Tweet, error)) error {
+func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet, error)) error {
 	timeline, err := getTimeline()
 	if err != nil {
 		return err
@@ -47,6 +47,9 @@ func viewTimeline(getTimeline func() ([]anaconda.Tweet, error)) error {
 			Clear: true,
 			Handler: func(_ *twopane.View, key string) bool {
 				switch key {
+				case "n":
+					postWithValue(api, nil)
+					return true
 				case "r", "R", "\x12":
 					nextaction = func() error {
 						timeline, err := getTimeline()
@@ -84,5 +87,5 @@ func viewTimeline(getTimeline func() ([]anaconda.Tweet, error)) error {
 }
 
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
-	return viewTimeline(func()([]anaconda.Tweet,error){ return api.GetHomeTimeline(url.Values{}) })
+	return viewTimeline(api, func() ([]anaconda.Tweet, error) { return api.GetHomeTimeline(url.Values{}) })
 }
