@@ -12,7 +12,7 @@ import (
 )
 
 type rowT struct {
-	*anaconda.Tweet
+	anaconda.Tweet
 	contents []string
 }
 
@@ -23,7 +23,7 @@ func (row *rowT) Title() string {
 func (row *rowT) Contents() []string {
 	if row.contents == nil {
 		var buffer strings.Builder
-		catTweet(row.Tweet, "\x1B[0;32;1m", "\x1B[0m", &buffer)
+		catTweet(&row.Tweet, "\x1B[0;32;1m", "\x1B[0m", &buffer)
 		row.contents = strings.Split(buffer.String(), "\n")
 	}
 	return row.contents
@@ -40,15 +40,16 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	}
 	rows := make([]twopane.Row, 0, len(timeline))
 	uniq := make(map[string]struct{})
-	for i, t := range timeline {
-		rows = append(rows, &rowT{Tweet: &timeline[i]})
-		key := t.IdStr + t.User.ScreenName
+	for i := len(timeline) - 1; i >= 0; i-- {
+		rows = append(rows, &rowT{Tweet: timeline[i]})
+		key := timeline[i].IdStr + timeline[i].User.ScreenName
 		uniq[key] = struct{}{}
 	}
 	for {
 		var nextaction func() error
 		err := twopane.View{
-			Rows: rows,
+			Rows:    rows,
+			Reverse: true,
 			Handler: func(param *twopane.Param) bool {
 				switch param.Key {
 				case "t":
@@ -84,16 +85,14 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 						if err != nil {
 							return err
 						}
-						newrows := make([]twopane.Row, 0, len(timeline)+len(rows))
-						for i, t := range timeline {
-							key := t.IdStr + t.User.ScreenName
+						for i := len(timeline) - 1; i >= 0; i-- {
+							key := timeline[i].IdStr + timeline[i].User.ScreenName
 							if _, ok := uniq[key]; ok {
 								continue
 							}
 							uniq[key] = struct{}{}
-							newrows = append(newrows, &rowT{Tweet: &timeline[i]})
+							rows = append(rows, &rowT{Tweet: timeline[i]})
 						}
-						rows = append(newrows, rows...)
 						return nil
 					}
 					return false
