@@ -34,7 +34,7 @@ func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 		t = t.RetweetedStatus
 	}
 	fmt.Fprintf(w, "%sFrom:%s %s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
-	fmt.Fprintf(w, "%sMessage-ID:%s twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
+	fmt.Fprintf(w, "%sMessage-ID:%s https://twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
 	if t.InReplyToScreenName != "" {
 		fmt.Fprintf(w, "%sTo:%s @%s\n", bon, boff, t.InReplyToScreenName)
 		if t.InReplyToStatusIdStr != "" {
