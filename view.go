@@ -14,6 +14,7 @@ import (
 type rowT struct {
 	anaconda.Tweet
 	contents []string
+	mine     bool
 }
 
 func (row *rowT) Title() string {
@@ -72,14 +73,17 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 			case "n":
 				post, err := doPost(api, "", nil)
 				if err == nil {
-					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
+					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post, mine: true})
 				}
 			case ".", CTRL_R:
 				timeline, err := getTimeline()
 				if err == nil {
 					lastId := int64(0)
-					if len(param.View.Rows) > 0 {
-						lastId = param.View.Rows[len(param.View.Rows)-1].(*rowT).Tweet.Id
+					for i := len(param.View.Rows) - 1; i >= 0; i-- {
+						if !param.View.Rows[i].(*rowT).mine {
+							lastId = param.View.Rows[i].(*rowT).Tweet.Id
+							break
+						}
 					}
 					for i := len(timeline) - 1; i >= 0; i-- {
 						if timeline[i].Id > lastId {
