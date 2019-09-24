@@ -42,74 +42,55 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	for i := len(timeline) - 1; i >= 0; i-- {
 		rows = append(rows, &rowT{Tweet: timeline[i]})
 	}
-	for {
-		var nextaction func() error
-		err := twopane.View{
-			Rows:    rows,
-			Reverse: true,
-			Handler: func(param *twopane.Param) bool {
-				switch param.Key {
-				case "t":
-					if row, ok := rows[param.Cursor].(*rowT); ok {
-						_, err := api.Retweet(row.Tweet.Id, false)
-						if err == nil {
-							param.Message("[Retweeted]")
-						} else {
-							param.Message(err.Error())
-						}
-						if ch, err := param.GetKey(); err == nil {
-							param.UnGetKey(ch)
-						}
-					}
-					return true
-				case "T":
-					if row, ok := rows[param.Cursor].(*rowT); ok {
-						var buffer strings.Builder
-						fmt.Fprintf(&buffer,
-							"https://twitter.com/%s/status/%s\n%s",
-							row.Tweet.User.ScreenName,
-							row.Tweet.IdStr,
-							row.Tweet.FullText)
-						doPost(api, buffer.String(), nil)
-					}
-					return true
-				case "n":
-					post, err := doPost(api, "", nil)
+	return twopane.View{
+		Rows:    rows,
+		Reverse: true,
+		Handler: func(param *twopane.Param) bool {
+			switch param.Key {
+			case "t":
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					_, err := api.Retweet(row.Tweet.Id, false)
 					if err == nil {
-						param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
+						param.Message("[Retweeted]")
+					} else {
+						param.Message(err.Error())
 					}
-					return true
-				case ".", CTRL_R:
-					nextaction = func() error {
-						timeline, err := getTimeline()
-						if err != nil {
-							return err
-						}
-						lastId := rows[len(rows)-1].(*rowT).Tweet.Id
-						for i := len(timeline) - 1; i >= 0; i-- {
-							if timeline[i].Id > lastId {
-								rows = append(rows, &rowT{Tweet: timeline[i]})
-							}
-						}
-						return nil
+					if ch, err := param.GetKey(); err == nil {
+						param.UnGetKey(ch)
 					}
-					return false
-				default:
-					return true
 				}
-			},
-		}.Run()
-
-		if err != nil {
-			return err
-		}
-		if nextaction == nil {
-			return nil
-		}
-		if err := nextaction(); err != nil {
-			return err
-		}
-	}
+			case "T":
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					var buffer strings.Builder
+					fmt.Fprintf(&buffer,
+						"https://twitter.com/%s/status/%s\n%s",
+						row.Tweet.User.ScreenName,
+						row.Tweet.IdStr,
+						row.Tweet.FullText)
+					doPost(api, buffer.String(), nil)
+				}
+			case "n":
+				post, err := doPost(api, "", nil)
+				if err == nil {
+					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
+				}
+			case ".", CTRL_R:
+				timeline, err := getTimeline()
+				if err == nil {
+					lastId := int64(0)
+					if len(param.View.Rows) > 0 {
+						lastId = param.View.Rows[len(param.View.Rows)-1].(*rowT).Tweet.Id
+					}
+					for i := len(timeline) - 1; i >= 0; i-- {
+						if timeline[i].Id > lastId {
+							param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
+						}
+					}
+				}
+			}
+			return true
+		},
+	}.Run()
 }
 
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
