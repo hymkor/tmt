@@ -48,6 +48,21 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 		Reverse: true,
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
+			case "f":
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					tw, err := api.Favorite(row.Tweet.Id)
+					if err == nil {
+						param.Message("[Favorited]")
+						row.Tweet = tw
+						row.contents = nil
+						row.mine = true
+					} else {
+						param.Message(err.Error())
+					}
+					if ch, err := param.GetKey(); err == nil {
+						param.UnGetKey(ch)
+					}
+				}
 			case "t":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					_, err := api.Retweet(row.Tweet.Id, false)
