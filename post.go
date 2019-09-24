@@ -67,10 +67,11 @@ func dumpTwitterError(err error, w io.Writer) {
 }
 
 func postWithValue(api *tw.Api, values url.Values) error {
-	return doPost(api, "", values)
+	_, err := doPost(api, "", values)
+	return err
 }
 
-func doPost(api *tw.Api, draft string, values url.Values) error {
+func doPost(api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, error) {
 	editor := *flagEditor
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
@@ -78,16 +79,16 @@ func doPost(api *tw.Api, draft string, values url.Values) error {
 	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
 		fname, err := makeDraft(draft)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		text, err := callEditor(editor, fname)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for {
-			_, err := api.PostTweet(string(text), values)
+			post, err := api.PostTweet(string(text), values)
 			if err == nil {
-				return nil
+				return &post, nil
 			}
 			dumpTwitterError(err, os.Stderr)
 			fmt.Fprintln(os.Stderr, "Hit [Enter] to retry.")
@@ -95,16 +96,16 @@ func doPost(api *tw.Api, draft string, values url.Values) error {
 			os.Stdin.Read(dummy[:])
 			text, err = callEditor(editor, fname)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	} else {
 		text, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		_, err = api.PostTweet(string(text), values)
-		return err
+		post, err := api.PostTweet(string(text), values)
+		return &post, err
 	}
 }
 
@@ -162,7 +163,8 @@ func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	}
 	values := url.Values{}
 	values.Add("in_reply_to_status_id", m)
-	return doPost(api, draft.String(), values)
+	_, err = doPost(api, draft.String(), values)
+	return err
 }
 
 func retweet(_ context.Context, api *anaconda.TwitterApi, args []string) error {

@@ -74,7 +74,10 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 					}
 					return true
 				case "n":
-					postWithValue(api, nil)
+					post, err := doPost(api, "", nil)
+					if err == nil {
+						param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
+					}
 					return true
 				case ".", CTRL_R:
 					nextaction = func() error {
