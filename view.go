@@ -3,13 +3,28 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/atotto/clipboard"
 
 	"github.com/zetamatta/go-twopane"
 )
+
+func pasteUrl(buffer io.Writer, t *anaconda.Tweet) {
+	fmt.Fprintf(buffer, "https://twitter.com/%s/status/%s",
+		t.User.ScreenName,
+		t.IdStr)
+}
+
+func toUrl(t *anaconda.Tweet) string {
+	var buffer strings.Builder
+	pasteUrl(&buffer, t)
+	return buffer.String()
+}
 
 type rowT struct {
 	anaconda.Tweet
@@ -31,8 +46,11 @@ func (row *rowT) Contents(_ interface{}) []string {
 }
 
 const (
+	CTRL_C = "\x03"
 	CTRL_R = "\x12"
 )
+
+var rxUrl = regexp.MustCompile(`https?\:\/\/[[:graph:]]+`)
 
 func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet, error)) error {
 	timeline, err := getTimeline()
@@ -48,6 +66,19 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 		Reverse: true,
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
+			case CTRL_C:
+				tw := &param.Rows[param.Cursor].(*rowT).Tweet
+				var url string
+				if m := rxUrl.FindString(tw.FullText); m != "" {
+					url = m
+				} else {
+					url = toUrl(tw)
+				}
+				param.Message("[Copy] " + url)
+				clipboard.WriteAll(url)
+				if ch, err := param.GetKey(); err == nil {
+					param.UnGetKey(ch)
+				}
 			case "f":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					tw, err := api.Favorite(row.Tweet.Id)
@@ -82,11 +113,9 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 			case "T":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					var buffer strings.Builder
-					fmt.Fprintf(&buffer,
-						"https://twitter.com/%s/status/%s\n%s",
-						row.Tweet.User.ScreenName,
-						row.Tweet.IdStr,
-						row.Tweet.FullText)
+					pasteUrl(&buffer, &row.Tweet)
+					fmt.Fprintf(&buffer, "\n%s", row.Tweet.FullText)
+
 					if tw, err := doPost(api, buffer.String(), nil); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
