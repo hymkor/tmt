@@ -33,13 +33,13 @@ type rowT struct {
 }
 
 func (row *rowT) Title(_ interface{}) string {
-	return fmt.Sprintf("\x1B[32;1m%s\x1B[37;1m %s", row.Tweet.User.ScreenName, row.Tweet.FullText)
+	return fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s", row.Tweet.User.ScreenName, row.Tweet.FullText)
 }
 
 func (row *rowT) Contents(_ interface{}) []string {
 	if row.contents == nil {
 		var buffer strings.Builder
-		catTweet(&row.Tweet, "\x1B[0;32;1m", "\x1B[0m", &buffer)
+		catTweet(&row.Tweet, "\x1B[0;32m", "\x1B[0m", &buffer)
 		row.contents = strings.Split(buffer.String(), "\n")
 	}
 	return row.contents
