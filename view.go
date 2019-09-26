@@ -68,9 +68,10 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 					tw, err := api.Retweet(row.Tweet.Id, false)
 					if err == nil {
 						param.Message("[Retweeted]")
-						row.Tweet = tw
-						row.contents = nil
-						row.mine = true
+						param.View.Rows = append(param.View.Rows, &rowT{
+							Tweet: tw,
+							mine:  true,
+						})
 					} else {
 						param.Message(err.Error())
 					}
@@ -86,7 +87,12 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 						row.Tweet.User.ScreenName,
 						row.Tweet.IdStr,
 						row.Tweet.FullText)
-					doPost(api, buffer.String(), nil)
+					if tw, err := doPost(api, buffer.String(), nil); err == nil {
+						param.View.Rows = append(param.View.Rows, &rowT{
+							Tweet: *tw,
+							mine:  true,
+						})
+					}
 				}
 			case "n":
 				post, err := doPost(api, "", nil)
