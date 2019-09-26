@@ -62,8 +62,9 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 		rows = append(rows, &rowT{Tweet: timeline[i]})
 	}
 	return twopane.View{
-		Rows:    rows,
-		Reverse: true,
+		Rows:       rows,
+		Reverse:    true,
+		StatusLine: "*** [q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL ***",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
 			case CTRL_C:
