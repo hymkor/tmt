@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"html"
 	"io"
 	"net/url"
 	"regexp"
@@ -33,7 +34,9 @@ type rowT struct {
 }
 
 func (row *rowT) Title(_ interface{}) string {
-	return fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s", row.Tweet.User.ScreenName, row.Tweet.FullText)
+	return fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s",
+		row.Tweet.User.ScreenName,
+		html.UnescapeString(row.Tweet.FullText))
 }
 
 func (row *rowT) Contents(_ interface{}) []string {
