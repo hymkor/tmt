@@ -31,12 +31,16 @@ type rowT struct {
 	anaconda.Tweet
 	contents []string
 	mine     bool
+	title    string
 }
 
 func (row *rowT) Title(_ interface{}) string {
-	return fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s",
-		row.Tweet.User.ScreenName,
-		html.UnescapeString(row.Tweet.FullText))
+	if row.title == "" {
+		row.title = fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s",
+			row.Tweet.User.ScreenName,
+			strings.Replace(html.UnescapeString(row.Tweet.FullText), "\n", " ", -1))
+	}
+	return row.title
 }
 
 func (row *rowT) Contents(_ interface{}) []string {
