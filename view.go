@@ -135,6 +135,7 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 				post, err := doPost(api, "", nil)
 				if err == nil {
 					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post, mine: true})
+					param.Cursor = len(param.View.Rows) - 1
 				}
 			case ".", CTRL_R:
 				timeline, err := getTimeline()
@@ -146,6 +147,7 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 							break
 						}
 					}
+					param.Cursor = len(param.View.Rows) - 1
 					for i := len(timeline) - 1; i >= 0; i-- {
 						if timeline[i].Id > lastId {
 							param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
