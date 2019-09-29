@@ -86,7 +86,11 @@ func doPost(api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, erro
 			return nil, err
 		}
 		for {
-			post, err := api.PostTweet(string(text), values)
+			textStr := string(text)
+			if draft == textStr || strings.TrimSpace(textStr) == "" {
+				return nil, errors.New("cancel post")
+			}
+			post, err := api.PostTweet(textStr, values)
 			if err == nil {
 				return &post, nil
 			}
