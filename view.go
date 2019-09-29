@@ -68,6 +68,8 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	for i := len(timeline) - 1; i >= 0; i-- {
 		rows = append(rows, &rowT{Tweet: timeline[i]})
 	}
+	var me *anaconda.User
+
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
@@ -136,6 +138,29 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 				if err == nil {
 					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post, mine: true})
 					param.Cursor = len(param.View.Rows) - 1
+				}
+			case "r":
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					if me == nil {
+						meTmp, err := api.GetSelf(nil)
+						if err == nil {
+							me = &meTmp
+						}
+					}
+
+					draft := ""
+					if me == nil || me.Id != row.User.Id {
+						draft = fmt.Sprintf("@%s ", row.User.ScreenName)
+					}
+					values := url.Values{}
+					values.Add("in_reply_to_status_id", row.IdStr)
+					if tw, err := doPost(api, draft, values); err == nil {
+						param.View.Rows = append(param.View.Rows, &rowT{
+							Tweet: *tw,
+							mine:  true,
+						})
+						param.Cursor = len(param.View.Rows) - 1
+					}
 				}
 			case ".", CTRL_R:
 				timeline, err := getTimeline()
