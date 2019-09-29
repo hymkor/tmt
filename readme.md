@@ -1,6 +1,12 @@
 tmt - Twitter Maintenance Tool
 ==============================
 
+```
+tmt [-a ACCOUNT] [-editor EDITORNAME] {subcommand}
+```
+
+* view mode
+    * `tmt view` ... interactive viewing mode
 * show timeline
     * `tmt timeline` ... get home timeline
     * `tmt mention` ... get mention timeline
