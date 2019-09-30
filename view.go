@@ -11,6 +11,7 @@ import (
 
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/atotto/clipboard"
+	"github.com/toqueteos/webbrowser"
 
 	"github.com/zetamatta/go-twopane"
 )
@@ -73,9 +74,21 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
-		StatusLine: "*** [q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL ***",
+		StatusLine: "[q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL [o]OpenURL",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
+			case "o":
+				tw := &param.Rows[param.Cursor].(*rowT).Tweet
+				var url string
+				if m := rxUrl.FindString(tw.FullText); m != "" {
+					url = m
+				} else {
+					url = toUrl(tw)
+				}
+				param.Message("Open " + url + " ? [Y/N]")
+				if ch, err := param.GetKey(); err == nil && strings.EqualFold(ch, "y") {
+					webbrowser.Open(url)
+				}
 			case CTRL_C:
 				tw := &param.Rows[param.Cursor].(*rowT).Tweet
 				var url string
