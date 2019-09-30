@@ -60,6 +60,20 @@ const (
 
 var rxUrl = regexp.MustCompile(`https?\:\/\/[[:graph:]]+`)
 
+func findUrl(tw *anaconda.Tweet) string {
+	var text string
+	if tw.RetweetedStatus != nil {
+		text = tw.RetweetedStatus.FullText
+	} else {
+		text = tw.FullText
+	}
+	if m := rxUrl.FindString(text); m != "" {
+		return m
+	} else {
+		return toUrl(tw)
+	}
+}
+
 func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet, error)) error {
 	timeline, err := getTimeline()
 	if err != nil {
@@ -79,24 +93,14 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 			switch param.Key {
 			case "o":
 				tw := &param.Rows[param.Cursor].(*rowT).Tweet
-				var url string
-				if m := rxUrl.FindString(tw.FullText); m != "" {
-					url = m
-				} else {
-					url = toUrl(tw)
-				}
+				url := findUrl(tw)
 				param.Message("Open " + url + " ? [Y/N]")
 				if ch, err := param.GetKey(); err == nil && strings.EqualFold(ch, "y") {
 					webbrowser.Open(url)
 				}
 			case CTRL_C:
 				tw := &param.Rows[param.Cursor].(*rowT).Tweet
-				var url string
-				if m := rxUrl.FindString(tw.FullText); m != "" {
-					url = m
-				} else {
-					url = toUrl(tw)
-				}
+				url := findUrl(tw)
 				param.Message("[Copy] " + url)
 				clipboard.WriteAll(url)
 				if ch, err := param.GetKey(); err == nil {
