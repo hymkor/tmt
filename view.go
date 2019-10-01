@@ -93,11 +93,17 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
 			case CTRL_M:
-				if tw, ok := param.Rows[param.Cursor].(*rowT); ok && tw.Tweet.InReplyToStatusID > 0 {
-					if tw1, err := api.GetTweet(tw.Tweet.InReplyToStatusID, nil); err == nil {
-						param.Rows = append(param.Rows, nil)
-						copy(param.Rows[param.Cursor+1:], param.Rows[param.Cursor:])
-						param.Rows[param.Cursor] = &rowT{Tweet: tw1}
+				if row, ok := param.Rows[param.Cursor].(*rowT); ok {
+					tw := &row.Tweet
+					if tw.RetweetedStatus != nil {
+						tw = tw.RetweetedStatus
+					}
+					if tw.InReplyToStatusID > 0 {
+						if tw1, err := api.GetTweet(tw.InReplyToStatusID, nil); err == nil {
+							param.Rows = append(param.Rows, nil)
+							copy(param.Rows[param.Cursor+1:], param.Rows[param.Cursor:])
+							param.Rows[param.Cursor] = &rowT{Tweet: tw1}
+						}
 					}
 				}
 			case "o":
