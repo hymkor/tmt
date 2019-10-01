@@ -55,6 +55,7 @@ func (row *rowT) Contents(_ interface{}) []string {
 
 const (
 	CTRL_C = "\x03"
+	CTRL_M = "\x0D"
 	CTRL_R = "\x12"
 )
 
@@ -88,9 +89,17 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
-		StatusLine: "[q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL [o]OpenURL",
+		StatusLine: "[q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL [o]OpenURL [CR]MoveThread",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
+			case CTRL_M:
+				if tw, ok := param.Rows[param.Cursor].(*rowT); ok && tw.Tweet.InReplyToStatusID > 0 {
+					if tw1, err := api.GetTweet(tw.Tweet.InReplyToStatusID, nil); err == nil {
+						param.Rows = append(param.Rows, nil)
+						copy(param.Rows[param.Cursor+1:], param.Rows[param.Cursor:])
+						param.Rows[param.Cursor] = &rowT{Tweet: tw1}
+					}
+				}
 			case "o":
 				tw := &param.Rows[param.Cursor].(*rowT).Tweet
 				url := findUrl(tw)
