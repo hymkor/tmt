@@ -39,7 +39,7 @@ func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
 		fmt.Fprintf(w, "%sTo:%s @%s\n", bon, boff, t.InReplyToScreenName)
 		if t.InReplyToStatusIdStr != "" {
 			fmt.Fprintf(w,
-				"%sIn-Reply-To:%s twitter.com/%s/status/%s\n",
+				"%sIn-Reply-To:%s https://twitter.com/%s/status/%s\n",
 				bon,
 				boff,
 				t.InReplyToScreenName,
