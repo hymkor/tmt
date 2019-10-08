@@ -75,7 +75,19 @@ func findUrl(tw *anaconda.Tweet) string {
 	}
 }
 
-func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet, error)) error {
+func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
+	var homeTimelineSave []twopane.Row
+	var mentionTimelineSave []twopane.Row
+	var favoriteTimelineSave []twopane.Row
+
+	getTimeline := func() ([]anaconda.Tweet, error) {
+		return api.GetHomeTimeline(url.Values{})
+	}
+
+	backupTimeline := func(timeline []twopane.Row) {
+		homeTimelineSave = timeline
+	}
+
 	timeline, err := getTimeline()
 	if err != nil {
 		return err
@@ -92,6 +104,7 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 		StatusLine: "[q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL [o]OpenURL [CR]MoveThread",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
+
 			case CTRL_M:
 				if row, ok := param.Rows[param.Cursor].(*rowT); ok {
 					tw := &row.Tweet
@@ -151,6 +164,8 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 					if ch, err := param.GetKey(); err == nil {
 						param.UnGetKey(ch)
 					}
+				} else {
+					break
 				}
 			case "T":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
@@ -194,6 +209,40 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 						param.Cursor = len(param.View.Rows) - 1
 					}
 				}
+			case "g":
+				param.Message("[h]Home [n]Mention [f]Like")
+				if ch, err := param.GetKey(); err == nil {
+					backupTimeline(param.Rows)
+
+					switch ch {
+					case "h":
+						getTimeline = func() ([]anaconda.Tweet, error) {
+							return api.GetHomeTimeline(url.Values{})
+						}
+						backupTimeline = func(timeline []twopane.Row) {
+							homeTimelineSave = timeline
+						}
+						param.Rows = homeTimelineSave
+					case "n":
+						getTimeline = func() ([]anaconda.Tweet, error) {
+							return api.GetMentionsTimeline(url.Values{})
+						}
+						backupTimeline = func(timeline []twopane.Row) {
+							mentionTimelineSave = timeline
+						}
+						param.Rows = mentionTimelineSave
+					case "f":
+						getTimeline = func() ([]anaconda.Tweet, error) {
+							return api.GetFavorites(url.Values{})
+						}
+						backupTimeline = func(timeline []twopane.Row) {
+							favoriteTimelineSave = timeline
+						}
+						param.Rows = favoriteTimelineSave
+					}
+					param.Cursor = len(param.View.Rows) - 1
+				}
+				fallthrough
 			case ".", CTRL_R:
 				timeline, err := getTimeline()
 				if err == nil {
@@ -215,8 +264,4 @@ func viewTimeline(api *anaconda.TwitterApi, getTimeline func() ([]anaconda.Tweet
 			return true
 		},
 	}.Run()
-}
-
-func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
-	return viewTimeline(api, func() ([]anaconda.Tweet, error) { return api.GetHomeTimeline(url.Values{}) })
 }
