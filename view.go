@@ -75,20 +75,33 @@ func findUrl(tw *anaconda.Tweet) string {
 	}
 }
 
+type Timeline struct {
+	Fetch  func() ([]anaconda.Tweet, error)
+	Backup []twopane.Row
+}
+
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
-	var homeTimelineSave []twopane.Row
-	var mentionTimelineSave []twopane.Row
-	var favoriteTimelineSave []twopane.Row
-
-	getTimeline := func() ([]anaconda.Tweet, error) {
-		return api.GetHomeTimeline(url.Values{})
+	timelines := map[string]*Timeline{
+		"h": &Timeline{
+			Fetch: func() ([]anaconda.Tweet, error) {
+				return api.GetHomeTimeline(url.Values{})
+			},
+		},
+		"n": &Timeline{
+			Fetch: func() ([]anaconda.Tweet, error) {
+				return api.GetMentionsTimeline(url.Values{})
+			},
+		},
+		"f": &Timeline{
+			Fetch: func() ([]anaconda.Tweet, error) {
+				return api.GetFavorites(url.Values{})
+			},
+		},
 	}
 
-	backupTimeline := func(timeline []twopane.Row) {
-		homeTimelineSave = timeline
-	}
+	getTimeline := timelines["h"]
 
-	timeline, err := getTimeline()
+	timeline, err := getTimeline.Fetch()
 	if err != nil {
 		return err
 	}
@@ -212,39 +225,16 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			case "g":
 				param.Message("[h]Home [n]Mention [f]Like")
 				if ch, err := param.GetKey(); err == nil {
-					backupTimeline(param.Rows)
-
-					switch ch {
-					case "h":
-						getTimeline = func() ([]anaconda.Tweet, error) {
-							return api.GetHomeTimeline(url.Values{})
-						}
-						backupTimeline = func(timeline []twopane.Row) {
-							homeTimelineSave = timeline
-						}
-						param.Rows = homeTimelineSave
-					case "n":
-						getTimeline = func() ([]anaconda.Tweet, error) {
-							return api.GetMentionsTimeline(url.Values{})
-						}
-						backupTimeline = func(timeline []twopane.Row) {
-							mentionTimelineSave = timeline
-						}
-						param.Rows = mentionTimelineSave
-					case "f":
-						getTimeline = func() ([]anaconda.Tweet, error) {
-							return api.GetFavorites(url.Values{})
-						}
-						backupTimeline = func(timeline []twopane.Row) {
-							favoriteTimelineSave = timeline
-						}
-						param.Rows = favoriteTimelineSave
+					if newTimline, ok := timelines[ch]; ok {
+						getTimeline.Backup = param.Rows
+						getTimeline = newTimline
+						param.Rows = getTimeline.Backup
+						param.Cursor = len(param.View.Rows) - 1
 					}
-					param.Cursor = len(param.View.Rows) - 1
 				}
 				fallthrough
 			case ".", CTRL_R:
-				timeline, err := getTimeline()
+				timeline, err := getTimeline.Fetch()
 				if err == nil {
 					lastId := int64(0)
 					for i := len(param.View.Rows) - 1; i >= 0; i-- {
