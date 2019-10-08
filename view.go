@@ -78,6 +78,7 @@ func findUrl(tw *anaconda.Tweet) string {
 type Timeline struct {
 	Fetch  func() ([]anaconda.Tweet, error)
 	Backup []twopane.Row
+	Drop   func(id int64) error
 }
 
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
@@ -95,6 +96,10 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 		"f": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetFavorites(url.Values{})
+			},
+			Drop: func(id int64) error {
+				_, err := api.Unfavorite(id)
+				return err
 			},
 		},
 	}
@@ -117,7 +122,21 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 		StatusLine: "[q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL [o]OpenURL [CR]MoveThread",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
-
+			case "d":
+				if getTimeline.Drop == nil {
+					break
+				}
+				if row, ok := param.Rows[param.Cursor].(*rowT); ok {
+					if err := getTimeline.Drop(row.Id); err != nil {
+						param.Message(err.Error())
+						break
+					}
+					copy(param.Rows[param.Cursor:], param.Rows[param.Cursor+1:])
+					param.Rows = param.Rows[:len(param.Rows)-1]
+					if param.Cursor >= len(param.Rows) {
+						param.Cursor--
+					}
+				}
 			case CTRL_M:
 				if row, ok := param.Rows[param.Cursor].(*rowT); ok {
 					tw := &row.Tweet
