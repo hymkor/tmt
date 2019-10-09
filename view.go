@@ -31,7 +31,6 @@ func toUrl(t *anaconda.Tweet) string {
 type rowT struct {
 	anaconda.Tweet
 	contents []string
-	mine     bool
 	title    string
 }
 
@@ -104,6 +103,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 		},
 	}
 
+	already := map[int64]struct{}{}
 	getTimeline := timelines["h"]
 
 	timeline, err := getTimeline.Fetch()
@@ -112,7 +112,10 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	}
 	rows := make([]twopane.Row, 0, len(timeline))
 	for i := len(timeline) - 1; i >= 0; i-- {
-		rows = append(rows, &rowT{Tweet: timeline[i]})
+		if _, ok := already[timeline[i].Id]; !ok {
+			rows = append(rows, &rowT{Tweet: timeline[i]})
+			already[timeline[i].Id] = struct{}{}
+		}
 	}
 	var me *anaconda.User
 
@@ -173,7 +176,6 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						param.Message("[Favorited]")
 						row.Tweet = tw
 						row.contents = nil
-						row.mine = true
 					} else {
 						param.Message(err.Error())
 					}
@@ -188,7 +190,6 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						param.Message("[Retweeted]")
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: tw,
-							mine:  true,
 						})
 					} else {
 						param.Message(err.Error())
@@ -208,14 +209,13 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					if tw, err := doPost(api, buffer.String(), nil); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
-							mine:  true,
 						})
 					}
 				}
 			case "n":
 				post, err := doPost(api, "", nil)
 				if err == nil {
-					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post, mine: true})
+					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
 					param.Cursor = len(param.View.Rows) - 1
 				}
 			case "r":
@@ -236,7 +236,6 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					if tw, err := doPost(api, draft, values); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
-							mine:  true,
 						})
 						param.Cursor = len(param.View.Rows) - 1
 					}
@@ -255,16 +254,10 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			case ".", CTRL_R:
 				timeline, err := getTimeline.Fetch()
 				if err == nil {
-					lastId := int64(0)
-					for i := len(param.View.Rows) - 1; i >= 0; i-- {
-						if !param.View.Rows[i].(*rowT).mine {
-							lastId = param.View.Rows[i].(*rowT).Tweet.Id
-							break
-						}
-					}
 					for i := len(timeline) - 1; i >= 0; i-- {
-						if timeline[i].Id > lastId {
+						if _, ok := already[timeline[i].Id]; !ok {
 							param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
+							already[timeline[i].Id] = struct{}{}
 						}
 					}
 					param.Cursor = len(param.View.Rows) - 1
