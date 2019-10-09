@@ -131,6 +131,10 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					break
 				}
 				if row, ok := param.Rows[param.Cursor].(*rowT); ok {
+					param.Message("Remove this tweet ? [y/n]")
+					if ch, err := param.GetKey(); err != nil || ch != "y" {
+						break
+					}
 					if err := getTimeline.Drop(row.Id); err != nil {
 						param.Message(err.Error())
 						break
