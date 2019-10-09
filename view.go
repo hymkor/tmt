@@ -60,18 +60,19 @@ const (
 
 var rxUrl = regexp.MustCompile(`https?\:\/\/[[:graph:]]+`)
 
-func findUrl(tw *anaconda.Tweet) string {
+func findUrlAll(tw *anaconda.Tweet) []string {
 	var text string
 	if tw.RetweetedStatus != nil {
 		text = tw.RetweetedStatus.FullText
 	} else {
 		text = tw.FullText
 	}
-	if m := rxUrl.FindString(text); m != "" {
-		return m
-	} else {
-		return toUrl(tw)
-	}
+	list := rxUrl.FindAllString(text, -1)
+	return append(list, toUrl(tw))
+}
+
+func findUrl(tw *anaconda.Tweet) string {
+	return findUrlAll(tw)[0]
 }
 
 type Timeline struct {
@@ -156,10 +157,21 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				}
 			case "o":
 				tw := &param.Rows[param.Cursor].(*rowT).Tweet
-				url := findUrl(tw)
-				param.Message("Open " + url + " ? [Y/N]")
-				if ch, err := param.GetKey(); err == nil && strings.EqualFold(ch, "y") {
-					webbrowser.Open(url)
+				url := findUrlAll(tw)
+				var msg strings.Builder
+				msg.WriteString("Open")
+				for i, url := range url {
+					if i >= 10 {
+						break
+					}
+					fmt.Fprintf(&msg, "\n[%d] %s", i, url)
+				}
+				msg.WriteString(" ?")
+				param.Message(msg.String())
+				if ch, err := param.GetKey(); err == nil {
+					if index := strings.Index("0123456789", ch); index >= 0 {
+						webbrowser.Open(url[index])
+					}
 				}
 			case CTRL_C:
 				tw := &param.Rows[param.Cursor].(*rowT).Tweet
