@@ -296,15 +296,20 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				fallthrough
 			case ".", CTRL_R:
 				timeline, err := getTimeline.Fetch()
-				if err == nil {
-					for i := len(timeline) - 1; i >= 0; i-- {
-						if _, ok := already[timeline[i].Id]; !ok {
-							param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
-							already[timeline[i].Id] = struct{}{}
-						}
+				if err != nil {
+					param.Message(err.Error())
+					if ch, err := param.GetKey(); err == nil {
+						param.UnGetKey(ch)
 					}
-					param.Cursor = len(param.View.Rows) - 1
+					break
 				}
+				for i := len(timeline) - 1; i >= 0; i-- {
+					if _, ok := already[timeline[i].Id]; !ok {
+						param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
+						already[timeline[i].Id] = struct{}{}
+					}
+				}
+				param.Cursor = len(param.View.Rows) - 1
 			}
 			return true
 		},
