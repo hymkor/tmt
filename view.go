@@ -105,6 +105,12 @@ func tco(url string) (string, error) {
 	return loc.String(), nil
 }
 
+func peekKey(param *twopane.Param) {
+	if ch, err := param.GetKey(); err == nil {
+		param.UnGetKey(ch)
+	}
+}
+
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timelines := map[string]*Timeline{
 		"h": &Timeline{
@@ -161,6 +167,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 					if err := getTimeline.Drop(row.Id); err != nil {
 						param.Message(err.Error())
+						peekKey(param)
 						break
 					}
 					copy(param.Rows[param.Cursor:], param.Rows[param.Cursor+1:])
@@ -209,9 +216,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				url := findUrl(tw)
 				param.Message("[Copy] " + url)
 				clipboard.WriteAll(url)
-				if ch, err := param.GetKey(); err == nil {
-					param.UnGetKey(ch)
-				}
+				peekKey(param)
 			case "f":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					tw, err := api.Favorite(row.Tweet.Id)
@@ -222,9 +227,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					} else {
 						param.Message(err.Error())
 					}
-					if ch, err := param.GetKey(); err == nil {
-						param.UnGetKey(ch)
-					}
+					peekKey(param)
 				}
 			case "t":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
@@ -237,9 +240,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					} else {
 						param.Message(err.Error())
 					}
-					if ch, err := param.GetKey(); err == nil {
-						param.UnGetKey(ch)
-					}
+					peekKey(param)
 				} else {
 					break
 				}
@@ -298,9 +299,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				timeline, err := getTimeline.Fetch()
 				if err != nil {
 					param.Message(err.Error())
-					if ch, err := param.GetKey(); err == nil {
-						param.UnGetKey(ch)
-					}
+					peekKey(param)
 					break
 				}
 				for i := len(timeline) - 1; i >= 0; i-- {
