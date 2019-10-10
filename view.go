@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -79,6 +80,29 @@ type Timeline struct {
 	Fetch  func() ([]anaconda.Tweet, error)
 	Backup []twopane.Row
 	Drop   func(id int64) error
+}
+
+func tco(url string) (string, error) {
+	if !strings.HasPrefix(url, "https://t.co") {
+		return url, nil
+	}
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	res, err := client.Head(url)
+	if err != nil {
+		return "", err
+	}
+	if !res.Close && res.Body != nil {
+		defer res.Body.Close()
+	}
+	loc, err := res.Location()
+	if err != nil {
+		return "", err
+	}
+	return loc.String(), nil
 }
 
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
@@ -167,6 +191,9 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				for i, url := range url {
 					if i >= 10 {
 						break
+					}
+					if url2, err := tco(url); err == nil && url2 != "" {
+						url = url2
 					}
 					fmt.Fprintf(&msg, "\n[%d] %s", i, url)
 				}
