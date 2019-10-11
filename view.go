@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -122,6 +123,8 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 	return nil
 }
 
+var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)$`)
+
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timelines := map[string]*Timeline{
 		"h": &Timeline{
@@ -202,19 +205,32 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				url := findUrlAll(tw)
 				var msg strings.Builder
 				msg.WriteString("Open")
-				for i, url := range url {
+				for i, url1 := range url {
 					if i >= 10 {
 						break
 					}
-					if url2, err := tco(url); err == nil && url2 != "" {
-						url = url2
+					if url2, err := tco(url1); err == nil && url2 != "" {
+						url1 = url2
+						url[i] = url1
 					}
-					fmt.Fprintf(&msg, "\n[%d] %s", i, url)
+					fmt.Fprintf(&msg, "\n[%d] %s", i, url1)
 				}
 				msg.WriteString(" ?")
 				param.Message(msg.String())
 				if ch, err := param.GetKey(); err == nil {
 					if index := strings.Index("0123456789", ch); index >= 0 {
+						if index == len(url)-1 {
+							// current tweet
+							webbrowser.Open(url[index])
+							break
+						}
+						m := rxTweetStatusUrl.FindStringSubmatch(url[index])
+						if m != nil {
+							if id, err := strconv.ParseInt(m[1], 10, 64); err == nil {
+								insTweet(api, param, id)
+								break
+							}
+						}
 						webbrowser.Open(url[index])
 					}
 				}
