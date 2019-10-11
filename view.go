@@ -111,6 +111,17 @@ func peekKey(param *twopane.Param) {
 	}
 }
 
+func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
+	tw1, err := api.GetTweet(id, nil)
+	if err != nil {
+		return err
+	}
+	param.Rows = append(param.Rows, nil)
+	copy(param.Rows[param.Cursor+1:], param.Rows[param.Cursor:])
+	param.Rows[param.Cursor] = &rowT{Tweet: tw1}
+	return nil
+}
+
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timelines := map[string]*Timeline{
 		"h": &Timeline{
@@ -183,11 +194,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						tw = tw.RetweetedStatus
 					}
 					if tw.InReplyToStatusID > 0 {
-						if tw1, err := api.GetTweet(tw.InReplyToStatusID, nil); err == nil {
-							param.Rows = append(param.Rows, nil)
-							copy(param.Rows[param.Cursor+1:], param.Rows[param.Cursor:])
-							param.Rows[param.Cursor] = &rowT{Tweet: tw1}
-						}
+						insTweet(api, param, tw.InReplyToStatusID)
 					}
 				}
 			case "o":
