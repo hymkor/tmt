@@ -83,27 +83,51 @@ type Timeline struct {
 	Drop   func(id int64) error
 }
 
-func tco(url string) (string, error) {
-	if !strings.HasPrefix(url, "https://t.co") {
-		return url, nil
-	}
+func tco(url string) string {
+
+	limit := 10
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-	res, err := client.Head(url)
-	if err != nil {
-		return "", err
+
+	for {
+		limit--
+		if limit <= 0 {
+			return url
+		}
+
+		var res *http.Response
+		var err error
+
+		if strings.HasPrefix(url, "https://t.co") ||
+			strings.HasPrefix(url, "https://amzn.to") ||
+			strings.HasPrefix(url, "http://amzn.to/") ||
+			strings.HasPrefix(url, "https://youtu.be") ||
+			strings.HasPrefix(url, "https://bit.ly") {
+			res, err = client.Head(url)
+		} else if strings.HasPrefix(url, "https://htn.to") ||
+			strings.HasPrefix(url, "https://b.hatena.ne.jp/-/redirect") {
+			res, err = client.Get(url)
+		} else {
+			break
+		}
+
+		if err != nil {
+			return url
+		}
+
+		loc, err := res.Location()
+		if !res.Close && res.Body != nil {
+			res.Body.Close()
+		}
+		if err != nil {
+			return url
+		}
+		url = loc.String()
 	}
-	if !res.Close && res.Body != nil {
-		defer res.Body.Close()
-	}
-	loc, err := res.Location()
-	if err != nil {
-		return "", err
-	}
-	return loc.String(), nil
+	return url
 }
 
 func peekKey(param *twopane.Param) {
@@ -209,11 +233,8 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					if i >= 10 {
 						break
 					}
-					if url2, err := tco(url1); err == nil && url2 != "" {
-						url1 = url2
-						url[i] = url1
-					}
-					fmt.Fprintf(&msg, "\n[%d] %s", i, url1)
+					url[i] = tco(url1)
+					fmt.Fprintf(&msg, "\n[%d] %s", i, url[i])
 				}
 				msg.WriteString(" ?")
 				param.Message(msg.String())
