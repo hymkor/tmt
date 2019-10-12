@@ -210,7 +210,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 					copy(param.Rows[param.Cursor:], param.Rows[param.Cursor+1:])
 					param.Rows = param.Rows[:len(param.Rows)-1]
-					if param.Cursor >= len(param.Rows) {
+					if param.Cursor > 0 {
 						param.Cursor--
 					}
 				}
