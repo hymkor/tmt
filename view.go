@@ -170,6 +170,11 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				return err
 			},
 		},
+		"u": &Timeline{
+			Fetch: func() ([]anaconda.Tweet, error) {
+				return myTimeline(api)
+			},
+		},
 	}
 
 	already := map[int64]struct{}{}
