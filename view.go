@@ -351,7 +351,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 				}
 			case "g":
-				param.Message("[h]Home [n]Mention [f]Like")
+				param.Message("[h]Home [n]Mention [f]Like [u]User")
 				if ch, err := param.GetKey(); err == nil {
 					if newTimline, ok := timelines[ch]; ok {
 						getTimeline.Backup = param.Rows
