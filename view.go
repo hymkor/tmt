@@ -302,6 +302,9 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				}
 			case "t":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					if !yesNo(param, "Retweet ? [y/n]") {
+						break
+					}
 					tw, err := api.Retweet(row.Tweet.Id, false)
 					if err == nil {
 						param.Message("[Retweeted]")
