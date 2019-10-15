@@ -149,6 +149,21 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 
 var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)$`)
 
+func errorMessage(err error) string {
+	if e, ok := err.(*anaconda.ApiError); ok {
+		var buffer strings.Builder
+		for _, e1 := range e.Decoded.Errors {
+			if buffer.Len() > 0 {
+				fmt.Fprintln(&buffer)
+			}
+			fmt.Fprintf(&buffer, "[%d] %s", e1.Code, e1.Message)
+		}
+		return buffer.String()
+	} else {
+		return err.Error()
+	}
+}
+
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timelines := map[string]*Timeline{
 		"h": &Timeline{
@@ -209,7 +224,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						break
 					}
 					if err := getTimeline.Drop(row.Id); err != nil {
-						param.Message(err.Error())
+						param.Message(errorMessage(err))
 						peekKey(param)
 						break
 					}
@@ -274,7 +289,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						row.Tweet = tw
 						row.contents = nil
 					} else {
-						param.Message(err.Error())
+						param.Message(errorMessage(err))
 					}
 					peekKey(param)
 				}
@@ -287,7 +302,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 							Tweet: tw,
 						})
 					} else {
-						param.Message(err.Error())
+						param.Message(errorMessage(err))
 					}
 					peekKey(param)
 				} else {
@@ -347,7 +362,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			case ".", CTRL_R:
 				timeline, err := getTimeline.Fetch()
 				if err != nil {
-					param.Message(err.Error())
+					param.Message(errorMessage(err))
 					peekKey(param)
 					break
 				}
