@@ -149,6 +149,12 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 
 var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)$`)
 
+func yesNo(p *twopane.Param, msg string) bool {
+	p.Message("\x1B[33;1m" + msg + "\x1B[0m")
+	ch, err := p.GetKey()
+	return err == nil && strings.EqualFold(ch, "y")
+}
+
 func errorMessage(err error) string {
 	var buffer strings.Builder
 	buffer.WriteString("\x1B[35;1m")
@@ -221,8 +227,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					break
 				}
 				if row, ok := param.Rows[param.Cursor].(*rowT); ok {
-					param.Message("Remove this tweet ? [y/n]")
-					if ch, err := param.GetKey(); err != nil || ch != "y" {
+					if !yesNo(param, "Remove this tweet ? [y/n]") {
 						break
 					}
 					if err := getTimeline.Drop(row.Id); err != nil {
