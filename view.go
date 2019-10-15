@@ -150,18 +150,20 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)$`)
 
 func errorMessage(err error) string {
+	var buffer strings.Builder
+	buffer.WriteString("\x1B[35;1m")
 	if e, ok := err.(*anaconda.ApiError); ok {
-		var buffer strings.Builder
-		for _, e1 := range e.Decoded.Errors {
-			if buffer.Len() > 0 {
+		for i, e1 := range e.Decoded.Errors {
+			if i > 0 {
 				fmt.Fprintln(&buffer)
 			}
 			fmt.Fprintf(&buffer, "[%d] %s", e1.Code, e1.Message)
 		}
-		return buffer.String()
 	} else {
-		return err.Error()
+		buffer.WriteString(err.Error())
 	}
+	buffer.WriteString("\x1B[0m")
+	return buffer.String()
 }
 
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
