@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/ChimeraCoder/anaconda"
-	"github.com/atotto/clipboard"
 	"github.com/toqueteos/webbrowser"
 
 	"github.com/zetamatta/go-twopane"
@@ -55,7 +54,6 @@ func (row *rowT) Contents(_ interface{}) []string {
 }
 
 const (
-	CTRL_C = "\x03"
 	CTRL_M = "\x0D"
 	CTRL_R = "\x12"
 )
@@ -301,12 +299,6 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						webbrowser.Open(url[index])
 					}
 				}
-			case CTRL_C:
-				tw := &param.Rows[param.Cursor].(*rowT).Tweet
-				url := findUrl(tw)
-				param.Message("[Copy] " + url)
-				clipboard.WriteAll(url)
-				peekKey(param)
 			case "f":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					tw, err := api.Favorite(row.Tweet.Id)
