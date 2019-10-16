@@ -219,9 +219,28 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
-		StatusLine: "[q]Quit [n]post [f]Like [t]Retweet [T]Comment [.]Reload [C-c]CopyURL [o]OpenURL [CR]MoveThread",
+		StatusLine: "[F1][?]Help [q]Quit [n]post [l]Like [t]Retweet [T]Comment [.]Reload [o]OpenURL",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
+			case "?", "F1":
+				fmt.Fprint(param.Out, `[F1][?] This help
+[q] Quit
+[j] Next Tweet
+[k] Previous Tweet
+[.] Load new Tweets
+[Space] Page down
+[g]+[h] Home
+[g]+[r] Mentions
+[g]+[l] Likes
+[g]+[u] Go to user
+[n] New Tweet
+[l] Like
+[r] Reply
+[t] Retweet
+[T] Retweet with comment
+[Enter] Open thread
+[o] OpenURL`)
+				param.GetKey()
 			case "d":
 				if getTimeline.Drop == nil {
 					break
