@@ -177,12 +177,12 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				return api.GetHomeTimeline(url.Values{})
 			},
 		},
-		"n": &Timeline{
+		"r": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetMentionsTimeline(url.Values{})
 			},
 		},
-		"f": &Timeline{
+		"l": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetFavorites(url.Values{})
 			},
@@ -217,7 +217,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
-		StatusLine: "[F1][?]Help [q]Quit [n]post [l]Like [t]Retweet [T]Comment [.]Reload [o]OpenURL",
+		StatusLine: "[F1][?]Help [q]Quit [n]Post [r]Reply [l]Like [t]Retweet [.]Reload [o]OpenURL",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
 			case "?", "F1":
@@ -299,7 +299,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						webbrowser.Open(url[index])
 					}
 				}
-			case "f":
+			case "f", "l":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					tw, err := api.Favorite(row.Tweet.Id)
 					if err == nil {
@@ -370,7 +370,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 				}
 			case "g":
-				param.Message("[h]Home [n]Mention [f]Like [u]User")
+				param.Message("[h]Home [l]Reply [l]Like [u]User")
 				if ch, err := param.GetKey(); err == nil {
 					if newTimline, ok := timelines[ch]; ok {
 						getTimeline.Backup = param.Rows
