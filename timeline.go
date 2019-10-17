@@ -28,13 +28,13 @@ func globalTimeToLocal(org string) string {
 var rxDotsLine = regexp.MustCompile(`(?m)^\.+$`)
 
 func catTweet(t *anaconda.Tweet, bon, boff string, w io.Writer) {
+	fmt.Fprintf(w, "%sMessage-ID:%s https://twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
 	if t.RetweetedStatus != nil {
 		fmt.Fprintf(w, "%sRetweeted-By%s: %s <@%s>\n",
 			bon, boff, t.User.Name, t.User.ScreenName)
 		t = t.RetweetedStatus
 	}
 	fmt.Fprintf(w, "%sFrom:%s %s <@%s>\n", bon, boff, t.User.Name, t.User.ScreenName)
-	fmt.Fprintf(w, "%sMessage-ID:%s https://twitter.com/%s/status/%s\n", bon, boff, t.User.ScreenName, t.IdStr)
 	if t.InReplyToScreenName != "" {
 		fmt.Fprintf(w, "%sTo:%s @%s\n", bon, boff, t.InReplyToScreenName)
 		if t.InReplyToStatusIdStr != "" {
