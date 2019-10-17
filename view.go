@@ -223,7 +223,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
-		StatusLine: "[F1][?]Help [q]Quit [n]Post [r]Reply [l]Like [t]Retweet [.]Reload [o]OpenURL",
+		StatusLine: "[F1][?]Help [q]Quit [n]Post [r]Reply [l]Like [t]Retweet [.]Reload",
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
 			case "?", "F1":
