@@ -178,17 +178,17 @@ func errorMessage(err error) string {
 
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timelines := map[string]*Timeline{
-		"h": &Timeline{
+		"H": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetHomeTimeline(url.Values{})
 			},
 		},
-		"r": &Timeline{
+		"R": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetMentionsTimeline(url.Values{})
 			},
 		},
-		"l": &Timeline{
+		"L": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetFavorites(url.Values{})
 			},
@@ -197,7 +197,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				return err
 			},
 		},
-		"u": &Timeline{
+		"U": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return myTimeline(api)
 			},
@@ -205,7 +205,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	}
 
 	already := map[int64]struct{}{}
-	getTimeline := timelines["h"]
+	getTimeline := timelines["H"]
 
 	timeline, err := getTimeline.Fetch()
 	if err != nil {
@@ -228,20 +228,20 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			switch param.Key {
 			case "?", "F1":
 				fmt.Fprint(param.Out, `[F1][?] This help
-[q] Quit
-[j] Next Tweet
-[k] Previous Tweet
+[Q] Quit
+[J] Next Tweet
+[K] Previous Tweet
 [.] Load new Tweets
 [Space] Page down
-[g]+[h] Home
-[g]+[r] Mentions
-[g]+[l] Likes
-[g]+[u] Go to user
-[n] New Tweet
-[l] Like
-[r] Reply
-[t] Retweet
-[T] Retweet with comment
+[Shift]+[H] Show Home Timeline
+[Shift]+[R] Show Reply Timeline
+[Shift]+[L] Show Favorites Timeline
+[Shift]+[U] Show Your Tweets
+[N] New Tweet
+[L] Like
+[R] Reply
+[T] Retweet
+[Shift]+[T] Retweet with comment
 [Enter] Open thread
 [0]..[9] OpenURL`)
 				param.GetKey()
@@ -365,15 +365,14 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						param.Cursor = len(param.View.Rows) - 1
 					}
 				}
-			case "g":
-				param.Message("[h]Home [l]Reply [l]Like [u]User")
-				if ch, err := param.GetKey(); err == nil {
-					if newTimline, ok := timelines[ch]; ok {
-						getTimeline.Backup = param.Rows
-						getTimeline = newTimline
-						param.Rows = getTimeline.Backup
-						param.Cursor = len(param.View.Rows) - 1
-					}
+			default: // change timeline
+				if newTimline, ok := timelines[param.Key]; ok {
+					getTimeline.Backup = param.Rows
+					getTimeline = newTimline
+					param.Rows = getTimeline.Backup
+					param.Cursor = len(param.View.Rows) - 1
+				} else {
+					break
 				}
 				fallthrough
 			case ".", CTRL_R:
