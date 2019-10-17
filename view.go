@@ -33,6 +33,7 @@ type rowT struct {
 	anaconda.Tweet
 	contents []string
 	title    string
+	urls     []string
 }
 
 func (row *rowT) Title(_ interface{}) string {
@@ -48,6 +49,15 @@ func (row *rowT) Contents(_ interface{}) []string {
 	if row.contents == nil {
 		var buffer strings.Builder
 		catTweet(&row.Tweet, "\x1B[0;32m", "\x1B[0m", &buffer)
+
+		row.urls = findUrlAll(&row.Tweet)
+		for i, url1 := range row.urls {
+			if i >= 10 {
+				break
+			}
+			row.urls[i] = tco(url1)
+			fmt.Fprintf(&buffer, "\n[%d] %s", i, row.urls[i])
+		}
 		row.contents = strings.Split(buffer.String(), "\n")
 	}
 	return row.contents
@@ -69,10 +79,6 @@ func findUrlAll(tw *anaconda.Tweet) []string {
 	}
 	list := rxUrl.FindAllString(text, -1)
 	return append(list, toUrl(tw))
-}
-
-func findUrl(tw *anaconda.Tweet) string {
-	return findUrlAll(tw)[0]
 }
 
 type Timeline struct {
@@ -237,7 +243,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 [t] Retweet
 [T] Retweet with comment
 [Enter] Open thread
-[o] OpenURL`)
+[0]..[9] OpenURL`)
 				param.GetKey()
 			case "d":
 				if getTimeline.Drop == nil {
@@ -268,36 +274,26 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						insTweet(api, param, tw.InReplyToStatusID)
 					}
 				}
-			case "o":
-				tw := &param.Rows[param.Cursor].(*rowT).Tweet
-				url := findUrlAll(tw)
-				var msg strings.Builder
-				msg.WriteString("Open")
-				for i, url1 := range url {
-					if i >= 10 {
+			case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
+				if row1, ok := param.Rows[param.Cursor].(*rowT); ok {
+					index := strings.Index("0123456789", param.Key)
+					if index >= len(row1.urls) {
 						break
 					}
-					url[i] = tco(url1)
-					fmt.Fprintf(&msg, "\n[%d] %s", i, url[i])
-				}
-				msg.WriteString(" ?")
-				param.Message(msg.String())
-				if ch, err := param.GetKey(); err == nil {
-					if index := strings.Index("0123456789", ch); index >= 0 {
-						if index == len(url)-1 {
-							// current tweet
-							webbrowser.Open(url[index])
+					urls := row1.urls
+					if index == len(urls)-1 {
+						// current tweet
+						webbrowser.Open(urls[index])
+						break
+					}
+					m := rxTweetStatusUrl.FindStringSubmatch(urls[index])
+					if m != nil {
+						if id, err := strconv.ParseInt(m[1], 10, 64); err == nil {
+							insTweet(api, param, id)
 							break
 						}
-						m := rxTweetStatusUrl.FindStringSubmatch(url[index])
-						if m != nil {
-							if id, err := strconv.ParseInt(m[1], 10, 64); err == nil {
-								insTweet(api, param, id)
-								break
-							}
-						}
-						webbrowser.Open(url[index])
 					}
+					webbrowser.Open(urls[index])
 				}
 			case "f", "l":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
