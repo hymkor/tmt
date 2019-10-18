@@ -227,7 +227,9 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
 			case "?", "F1":
-				fmt.Fprint(param.Out, `[F1][?] This help
+				fmt.Fprint(param.Out, "\x1b[0J")
+				fmt.Fprint(param.Out, `
+[F1][?] This help
 [Q] Quit
 [J] Next Tweet
 [K] Previous Tweet
