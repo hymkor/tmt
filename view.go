@@ -77,8 +77,7 @@ func findUrlAll(tw *anaconda.Tweet) []string {
 	} else {
 		text = tw.FullText
 	}
-	list := rxUrl.FindAllString(text, -1)
-	return append(list, toUrl(tw))
+	return rxUrl.FindAllString(text, -1)
 }
 
 type Timeline struct {
