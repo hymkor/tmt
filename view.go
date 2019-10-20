@@ -402,7 +402,15 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						timelines[screenName] = getTimeline
 					}
 					param.Rows = getTimeline.Backup
+					already = map[int64]struct{}{}
 					fetch(getTimeline, param, already)
+
+					param.Cursor = 0
+					for i, newrow := range param.Rows {
+						if newrow.(*rowT).Tweet.Id == row.Tweet.Id {
+							param.Cursor = i
+						}
+					}
 				}
 			default: // change timeline
 				if newTimline, ok := timelines[param.Key]; ok {
