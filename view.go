@@ -66,6 +66,7 @@ func (row *rowT) Contents(_ interface{}) []string {
 const (
 	CTRL_M = "\x0D"
 	CTRL_R = "\x12"
+	CTRL_U = "\x15"
 )
 
 var rxUrl = regexp.MustCompile(`https?\:\/\/[[:graph:]]+`)
@@ -175,6 +176,22 @@ func errorMessage(err error) string {
 	return buffer.String()
 }
 
+func fetch(getTimeline *Timeline, param *twopane.Param, already map[int64]struct{}) {
+	timeline, err := getTimeline.Fetch()
+	if err != nil {
+		param.Message(errorMessage(err))
+		peekKey(param)
+		return
+	}
+	for i := len(timeline) - 1; i >= 0; i-- {
+		if _, ok := already[timeline[i].Id]; !ok {
+			param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
+			already[timeline[i].Id] = struct{}{}
+		}
+	}
+	param.Cursor = len(param.View.Rows) - 1
+}
+
 func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	timelines := map[string]*Timeline{
 		"H": &Timeline{
@@ -238,13 +255,14 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 [Shift]+[R] Show Reply Timeline
 [Shift]+[L] Show Favorites Timeline
 [Shift]+[U] Show Your Tweets
+[Ctrl]+[U] Show Current user's Timeline
 [N] New Tweet
 [L] Like
 [R] Reply
 [T] Retweet
 [Shift]+[T] Retweet with comment
-[Enter] Open thread
-[0]..[9] OpenURL`)
+[Enter] Show this thread
+[0]..[9] Open written URL`)
 				param.GetKey()
 			case "d":
 				if getTimeline.Drop == nil {
@@ -336,6 +354,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
 						})
+						already[tw.Id] = struct{}{}
 					}
 				}
 			case "n":
@@ -343,6 +362,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				if err == nil {
 					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
 					param.Cursor = len(param.View.Rows) - 1
+					already[post.Id] = struct{}{}
 				}
 			case "r":
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
@@ -366,30 +386,38 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 						param.Cursor = len(param.View.Rows) - 1
 					}
 				}
+			case CTRL_U:
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					getTimeline.Backup = param.Rows
+					screenName := row.User.ScreenName
+					getTimeline, ok = timelines[screenName]
+					if !ok {
+						getTimeline = &Timeline{
+							Fetch: func() ([]anaconda.Tweet, error) {
+								values := url.Values{}
+								values.Add("screen_name", screenName)
+								return api.GetUserTimeline(values)
+							},
+						}
+						timelines[screenName] = getTimeline
+					}
+					param.Rows = getTimeline.Backup
+					fetch(getTimeline, param, already)
+				}
 			default: // change timeline
 				if newTimline, ok := timelines[param.Key]; ok {
 					getTimeline.Backup = param.Rows
 					getTimeline = newTimline
 					param.Rows = getTimeline.Backup
+					already = map[int64]struct{}{}
 					param.Cursor = len(param.View.Rows) - 1
 				} else {
 					break
 				}
 				fallthrough
 			case ".", CTRL_R:
-				timeline, err := getTimeline.Fetch()
-				if err != nil {
-					param.Message(errorMessage(err))
-					peekKey(param)
-					break
-				}
-				for i := len(timeline) - 1; i >= 0; i-- {
-					if _, ok := already[timeline[i].Id]; !ok {
-						param.View.Rows = append(param.View.Rows, &rowT{Tweet: timeline[i]})
-						already[timeline[i].Id] = struct{}{}
-					}
-				}
-				param.Cursor = len(param.View.Rows) - 1
+				fetch(getTimeline, param, already)
+				break
 			}
 			return true
 		},
