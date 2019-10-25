@@ -81,10 +81,17 @@ func findUrlAll(tw *anaconda.Tweet) []string {
 	return rxUrl.FindAllString(text, -1)
 }
 
+type _StatusLine string
+
+func (this _StatusLine) String() string {
+	return fmt.Sprintf("(%s) [F1][?]Help [q]Quit [n]Post [r]Reply [l]Like [t]Retweet [.]Reload", string(this))
+}
+
 type Timeline struct {
 	Fetch  func() ([]anaconda.Tweet, error)
 	Backup []twopane.Row
 	Drop   func(id int64) error
+	Mode   _StatusLine
 }
 
 func tco(url string) string {
@@ -198,11 +205,13 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetHomeTimeline(url.Values{})
 			},
+			Mode: _StatusLine("Home"),
 		},
 		"R": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return api.GetMentionsTimeline(url.Values{})
 			},
+			Mode: _StatusLine("Reply"),
 		},
 		"L": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
@@ -212,11 +221,13 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				_, err := api.Unfavorite(id)
 				return err
 			},
+			Mode: _StatusLine("Favorites"),
 		},
 		"U": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
 				return myTimeline(api)
 			},
+			Mode: _StatusLine("YourTweet"),
 		},
 	}
 
@@ -239,7 +250,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	return twopane.View{
 		Rows:       rows,
 		Reverse:    true,
-		StatusLine: "[F1][?]Help [q]Quit [n]Post [r]Reply [l]Like [t]Retweet [.]Reload",
+		StatusLine: _StatusLine("Home"),
 		Handler: func(param *twopane.Param) bool {
 			switch param.Key {
 			case "?", "F1":
@@ -413,12 +424,13 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 				}
 			default: // change timeline
-				if newTimline, ok := timelines[param.Key]; ok {
+				if newTimeline, ok := timelines[param.Key]; ok {
 					getTimeline.Backup = param.Rows
-					getTimeline = newTimline
+					getTimeline = newTimeline
 					param.Rows = getTimeline.Backup
 					already = map[int64]struct{}{}
 					param.Cursor = len(param.View.Rows) - 1
+					param.View.StatusLine = newTimeline.Mode
 				} else {
 					break
 				}
