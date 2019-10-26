@@ -361,7 +361,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					pasteUrl(&buffer, &row.Tweet)
 					fmt.Fprintf(&buffer, "\n%s", row.Tweet.FullText)
 
-					if tw, err := doPost(api, buffer.String(), nil); err == nil {
+					if tw, err := postWithEditor(api, buffer.String(), nil); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
 						})
@@ -369,7 +369,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 				}
 			case "n":
-				post, err := doPost(api, "", nil)
+				post, err := postWithEditor(api, "", nil)
 				if err == nil {
 					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
 					param.Cursor = len(param.View.Rows) - 1
@@ -390,7 +390,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 					values := url.Values{}
 					values.Add("in_reply_to_status_id", row.IdStr)
-					if tw, err := doPost(api, draft, values); err == nil {
+					if tw, err := postWithEditor(api, draft, values); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
 						})

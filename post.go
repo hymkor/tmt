@@ -40,12 +40,15 @@ func makeDraft(text string) (string, error) {
 }
 
 func callEditor(editor, fname string) ([]byte, error) {
+	if editor == "" {
+		editor = DEFAULT_EDITOR
+	}
 	cmd := exec.Command(editor, fname)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Run()
-	if !cmd.ProcessState.Success() {
+	if cmd.ProcessState == nil || !cmd.ProcessState.Success() {
 		return nil, errors.New("canceled.")
 	}
 	text, err := ioutil.ReadFile(fname)
@@ -71,38 +74,50 @@ func postWithValue(api *tw.Api, values url.Values) error {
 	return err
 }
 
+func _postWithEditor(api *tw.Api, editor string, draft string, values url.Values) (*anaconda.Tweet, error) {
+	fname, err := makeDraft(draft)
+	if err != nil {
+		return nil, err
+	}
+	text, err := callEditor(editor, fname)
+	if err != nil {
+		return nil, err
+	}
+	for {
+		textStr := string(text)
+		if draft == textStr || strings.TrimSpace(textStr) == "" {
+			return nil, errors.New("cancel post")
+		}
+		post, err := api.PostTweet(textStr, values)
+		if err == nil {
+			return &post, nil
+		}
+		dumpTwitterError(err, os.Stderr)
+		fmt.Fprintln(os.Stderr, "Hit [Enter] to retry.")
+		var dummy [100]byte
+		os.Stdin.Read(dummy[:])
+		text, err = callEditor(editor, fname)
+		if err != nil {
+			return nil, err
+		}
+	}
+}
+
+func postWithEditor(api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, error) {
+	editor := *flagEditor
+	if editor == "" {
+		editor = os.Getenv("EDITOR")
+	}
+	return _postWithEditor(api, editor, draft, values)
+}
+
 func doPost(api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, error) {
 	editor := *flagEditor
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
 	}
 	if isatty.IsTerminal(os.Stdin.Fd()) && editor != "" {
-		fname, err := makeDraft(draft)
-		if err != nil {
-			return nil, err
-		}
-		text, err := callEditor(editor, fname)
-		if err != nil {
-			return nil, err
-		}
-		for {
-			textStr := string(text)
-			if draft == textStr || strings.TrimSpace(textStr) == "" {
-				return nil, errors.New("cancel post")
-			}
-			post, err := api.PostTweet(textStr, values)
-			if err == nil {
-				return &post, nil
-			}
-			dumpTwitterError(err, os.Stderr)
-			fmt.Fprintln(os.Stderr, "Hit [Enter] to retry.")
-			var dummy [100]byte
-			os.Stdin.Read(dummy[:])
-			text, err = callEditor(editor, fname)
-			if err != nil {
-				return nil, err
-			}
-		}
+		return _postWithEditor(api, editor, draft, values)
 	} else {
 		text, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
