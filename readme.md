@@ -6,7 +6,7 @@ tmt [-a ACCOUNT] [-editor EDITORNAME] {subcommand}
 ```
 
 * view mode
-    * `tmt view` ... interactive viewing mode
+    * `tmt view` ... interactive viewing mode<img src="./example.png" />
 * show timeline
     * `tmt timeline` ... get home timeline
     * `tmt mention` ... get mention timeline
