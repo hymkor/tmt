@@ -36,11 +36,18 @@ type rowT struct {
 	urls     []string
 }
 
+const ZERO_WIDTH_SPACE = "\u200B"
+
+var titleReplacer = strings.NewReplacer(
+	"\n", "",
+	ZERO_WIDTH_SPACE, "",
+)
+
 func (row *rowT) Title(_ interface{}) string {
 	if row.title == "" {
 		row.title = fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s",
 			row.Tweet.User.ScreenName,
-			strings.Replace(html.UnescapeString(row.Tweet.FullText), "\n", " ", -1))
+			titleReplacer.Replace(html.UnescapeString(row.Tweet.FullText)))
 	}
 	return row.title
 }
@@ -58,7 +65,8 @@ func (row *rowT) Contents(_ interface{}) []string {
 			row.urls[i] = tco(url1)
 			fmt.Fprintf(&buffer, "\n[%d] %s", i, row.urls[i])
 		}
-		row.contents = strings.Split(buffer.String(), "\n")
+		contents := strings.ReplaceAll(buffer.String(), ZERO_WIDTH_SPACE, "")
+		row.contents = strings.Split(contents, "\n")
 	}
 	return row.contents
 }
