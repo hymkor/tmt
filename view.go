@@ -52,7 +52,7 @@ func (row *rowT) Title(_ interface{}) string {
 	return row.title
 }
 
-func (row *rowT) Contents(_ interface{}) []string {
+func (row *rowT) Contents(x interface{}) []string {
 	if row.contents == nil {
 		var buffer strings.Builder
 		catTweet(&row.Tweet, "\x1B[0;32m", "\x1B[0m", &buffer)
@@ -67,6 +67,23 @@ func (row *rowT) Contents(_ interface{}) []string {
 		}
 		contents := strings.ReplaceAll(buffer.String(), ZERO_WIDTH_SPACE, "")
 		row.contents = strings.Split(contents, "\n")
+
+		for _, url1 := range row.urls {
+			m := rxTweetStatusUrl.FindStringSubmatch(url1)
+			if m != nil {
+				if id, err := strconv.ParseInt(m[1], 10, 64); err == nil {
+					tw1, err := x.(*anaconda.TwitterApi).GetTweet(id, nil)
+					if err == nil {
+						quote := html.UnescapeString(tw1.FullText)
+
+						for _, s := range strings.Split(quote, "\n") {
+							row.contents = append(row.contents,
+								"\x1B[0;36m"+s+"\x1B[0m")
+						}
+					}
+				}
+			}
+		}
 	}
 	return row.contents
 }
@@ -256,6 +273,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	var me *anaconda.User
 
 	return twopane.View{
+		X:          api,
 		Rows:       rows,
 		Reverse:    true,
 		StatusLine: _StatusLine("Home"),
