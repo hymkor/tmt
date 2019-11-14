@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/mattn/go-colorable"
 	"github.com/toqueteos/webbrowser"
 
 	"github.com/zetamatta/go-twopane"
@@ -272,7 +273,11 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	}
 	var me *anaconda.User
 
+	out := colorable.NewColorableStderr()
+	io.WriteString(out, "\x1B]0;tmt\007")
+
 	return twopane.View{
+		Out:        out,
 		X:          api,
 		Rows:       rows,
 		Reverse:    true,
