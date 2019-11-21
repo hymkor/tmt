@@ -19,6 +19,9 @@ import (
 )
 
 func pasteUrl(buffer io.Writer, t *anaconda.Tweet) {
+	if t.RetweetedStatus != nil {
+		t = t.RetweetedStatus
+	}
 	fmt.Fprintf(buffer, "https://twitter.com/%s/status/%s",
 		t.User.ScreenName,
 		t.IdStr)
