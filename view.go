@@ -189,8 +189,11 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 
 var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)$`)
 
+const _ANSI_YELLOW = "\x1B[33;1m"
+const _ANSI_RESET = "\x1B[0m"
+
 func yesNo(p *twopane.Param, msg string) bool {
-	p.Message("\x1B[33;1m" + msg + "\x1B[0m")
+	p.Message(_ANSI_YELLOW + msg + _ANSI_RESET)
 	ch, err := p.GetKey()
 	return err == nil && strings.EqualFold(ch, "y")
 }
@@ -363,7 +366,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					tw, err := api.Favorite(row.Tweet.Id)
 					if err == nil {
-						param.Message("[Favorited]")
+						param.Message(_ANSI_YELLOW + "[Favorited]" + _ANSI_RESET)
 						row.Tweet = tw
 						row.contents = nil
 					} else {
@@ -378,7 +381,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 					tw, err := api.Retweet(row.Tweet.Id, false)
 					if err == nil {
-						param.Message("[Retweeted]")
+						param.Message(_ANSI_YELLOW + "[Retweeted]" + _ANSI_RESET)
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: tw,
 						})
