@@ -308,6 +308,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 [J] Next Tweet
 [K] Previous Tweet
 [.] Load new Tweets
+[Ctrl]+[R] Reload the current tweet
 [Space] Page down
 [Shift]+[H] Show Home Timeline
 [Shift]+[R] Show Reply Timeline
@@ -482,9 +483,18 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					break
 				}
 				fallthrough
-			case ".", CTRL_R:
+			case ".":
 				fetch(getTimeline, param, already)
 				break
+			case CTRL_R:
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					tw, err := api.GetTweet(row.Tweet.Id, nil)
+					if err == nil {
+						param.View.Rows[param.Cursor] = &rowT{
+							Tweet: tw,
+						}
+					}
+				}
 			}
 			return true
 		},
