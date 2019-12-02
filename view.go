@@ -448,7 +448,12 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			case CTRL_U:
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					getTimeline.Backup = param.Rows
-					screenName := row.User.ScreenName
+					var screenName string
+					if row.RetweetedStatus != nil {
+						screenName = row.RetweetedStatus.User.ScreenName
+					} else {
+						screenName = row.User.ScreenName
+					}
 					getTimeline, ok = timelines[screenName]
 					if !ok {
 						getTimeline = &Timeline{
