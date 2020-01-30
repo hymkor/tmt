@@ -187,7 +187,7 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 	return nil
 }
 
-var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)$`)
+var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)(\?s=\d+)?$`)
 
 const _ANSI_YELLOW = "\x1B[33;1m"
 const _ANSI_RESET = "\x1B[0m"
