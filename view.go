@@ -49,8 +49,10 @@ var titleReplacer = strings.NewReplacer(
 
 func (row *rowT) Title(_ interface{}) string {
 	if row.title == "" {
-		row.title = fmt.Sprintf("\x1B[32m%s\x1B[37;1m %s",
+		row.title = fmt.Sprintf("%s%s%s %s",
+			_ANSI_GREEN,
 			row.Tweet.User.ScreenName,
+			_ANSI_WHITE,
 			titleReplacer.Replace(html.UnescapeString(row.Tweet.FullText)))
 	}
 	return row.title
@@ -59,7 +61,7 @@ func (row *rowT) Title(_ interface{}) string {
 func (row *rowT) Contents(x interface{}) []string {
 	if row.contents == nil {
 		var buffer strings.Builder
-		catTweet(&row.Tweet, "\x1B[0;32m", "\x1B[0m", &buffer)
+		catTweet(&row.Tweet, _ANSI_GREEN, _ANSI_RESET, &buffer)
 
 		row.urls = findUrlAll(&row.Tweet)
 		for i, url1 := range row.urls {
@@ -82,7 +84,7 @@ func (row *rowT) Contents(x interface{}) []string {
 
 						for _, s := range strings.Split(quote, "\n") {
 							row.contents = append(row.contents,
-								"\x1B[0;36m"+s+"\x1B[0m")
+								_ANSI_CYAN+s+_ANSI_RESET)
 						}
 					}
 				}
@@ -189,8 +191,16 @@ func insTweet(api *anaconda.TwitterApi, param *twopane.Param, id int64) error {
 
 var rxTweetStatusUrl = regexp.MustCompile(`^https://twitter.com/\w+/status/(\d+)(\?s=\d+)?$`)
 
-const _ANSI_YELLOW = "\x1B[33;1m"
-const _ANSI_RESET = "\x1B[0m"
+const (
+	_ANSI_MAGENTA   = "\x1B[35;1m"
+	_ANSI_RESET     = "\x1B[0m"
+	_ANSI_YELLOW    = "\x1B[33;1m"
+	_ANSI_WHITE     = "\x1B[37;1m"
+	_ANSI_GREEN     = "\x1B[32m"
+	_ANSI_CYAN      = "\x1B[36m"
+	_ANSI_TITLE     = "\x1B]0;"
+	_ANSI_TITLE_END = "\007"
+)
 
 func yesNo(p *twopane.Param, msg string) bool {
 	p.Message(_ANSI_YELLOW + msg + _ANSI_RESET)
@@ -200,7 +210,7 @@ func yesNo(p *twopane.Param, msg string) bool {
 
 func errorMessage(err error) string {
 	var buffer strings.Builder
-	buffer.WriteString("\x1B[35;1m")
+	buffer.WriteString(_ANSI_MAGENTA)
 	if e, ok := err.(*anaconda.ApiError); ok {
 		for i, e1 := range e.Decoded.Errors {
 			if i > 0 {
@@ -211,7 +221,7 @@ func errorMessage(err error) string {
 	} else {
 		buffer.WriteString(err.Error())
 	}
-	buffer.WriteString("\x1B[0m")
+	buffer.WriteString(_ANSI_RESET)
 	return buffer.String()
 }
 
@@ -280,7 +290,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 	var me *anaconda.User
 
 	out := colorable.NewColorableStderr()
-	io.WriteString(out, "\x1B]0;tmt\007")
+	io.WriteString(out, _ANSI_TITLE+"tmt"+_ANSI_TITLE_END)
 
 	return twopane.View{
 		Out:        out,
@@ -298,6 +308,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 [J] Next Tweet
 [K] Previous Tweet
 [.] Load new Tweets
+[Ctrl]+[R] Reload the current tweet
 [Space] Page down
 [Shift]+[H] Show Home Timeline
 [Shift]+[R] Show Reply Timeline
@@ -437,7 +448,12 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 			case CTRL_U:
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					getTimeline.Backup = param.Rows
-					screenName := row.User.ScreenName
+					var screenName string
+					if row.RetweetedStatus != nil {
+						screenName = row.RetweetedStatus.User.ScreenName
+					} else {
+						screenName = row.User.ScreenName
+					}
 					getTimeline, ok = timelines[screenName]
 					if !ok {
 						getTimeline = &Timeline{
@@ -472,9 +488,18 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					break
 				}
 				fallthrough
-			case ".", CTRL_R:
+			case ".":
 				fetch(getTimeline, param, already)
 				break
+			case CTRL_R:
+				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
+					tw, err := api.GetTweet(row.Tweet.Id, nil)
+					if err == nil {
+						param.View.Rows[param.Cursor] = &rowT{
+							Tweet: tw,
+						}
+					}
+				}
 			}
 			return true
 		},
