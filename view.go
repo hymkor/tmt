@@ -1,12 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"html"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -241,7 +241,16 @@ func fetch(getTimeline *Timeline, param *twopane.Param, already map[int64]struct
 	param.Cursor = len(param.View.Rows) - 1
 }
 
-func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
+type StringFlag interface {
+	String(name string) string
+}
+
+func view(flags StringFlag, api *anaconda.TwitterApi, args []string) error {
+	editor := flags.String("editor")
+	if editor == "" {
+		editor = os.Getenv("EDITOR")
+	}
+
 	timelines := map[string]*Timeline{
 		"H": &Timeline{
 			Fetch: func() ([]anaconda.Tweet, error) {
@@ -409,7 +418,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					pasteUrl(&buffer, &row.Tweet)
 					fmt.Fprintf(&buffer, "\n%s", row.Tweet.FullText)
 
-					if tw, err := postWithEditor(api, buffer.String(), nil); err == nil {
+					if tw, err := _postWithEditor(api, editor, buffer.String(), nil); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
 						})
@@ -417,7 +426,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 				}
 			case "n":
-				post, err := postWithEditor(api, "", nil)
+				post, err := _postWithEditor(api, editor, "", nil)
 				if err == nil {
 					param.View.Rows = append(param.View.Rows, &rowT{Tweet: *post})
 					param.Cursor = len(param.View.Rows) - 1
@@ -438,7 +447,7 @@ func view(_ context.Context, api *anaconda.TwitterApi, args []string) error {
 					}
 					values := url.Values{}
 					values.Add("in_reply_to_status_id", row.IdStr)
-					if tw, err := postWithEditor(api, draft, values); err == nil {
+					if tw, err := _postWithEditor(api, editor, draft, values); err == nil {
 						param.View.Rows = append(param.View.Rows, &rowT{
 							Tweet: *tw,
 						})

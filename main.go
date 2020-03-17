@@ -2,72 +2,147 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
+
+	"github.com/urfave/cli/v2"
 
 	"github.com/zetamatta/tmt/ctrlc"
 	tmaint "github.com/zetamatta/tmt/oauth"
 	"github.com/zetamatta/tmt/secret"
 )
 
-type subCommandT struct {
-	F func(context.Context, *tmaint.Api, []string) error
-	U string
-}
-
-var subcommands = map[string]*subCommandT{
-	"followers":  {followers, " ... list members you are followed"},
-	"followings": {followings, " ... list members you follows"},
-	"follow":     {follow, "... follow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)"},
-	"unfollow":   {unfollow, "... unfollow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)"},
-	"dump":       {dump, "IDNum ... dump JSON for the tweet"},
-	"post":       {post, "... post tweet from STDIN"},
-	"cont":       {cont, "... post continued tweet from STDIN"},
-	"whoami":     {whoami, "... show who are you"},
-	"timeline":   {timeline, "... get home timeline"},
-	"mention":    {mention, "... get mention timeline"},
-	"reply":      {reply, "IDNum ... reply to IDNum"},
-	"said":       {said, "... show what I said"},
-	"retweet":    {retweet, "IDNum"},
-	"view":       {view, ".. start viewer"},
-}
-
-func main1(args []string) error {
-	if len(args) <= 0 {
-		exename, err := os.Executable()
-		if err == nil {
-			fmt.Fprintf(os.Stderr, "Usage:\n  %s COMMAND...\n", exename)
-		}
-		for name, value := range subcommands {
-			fmt.Fprintf(os.Stderr, "\t%s %s\n", name, value.U)
-		}
+func mains(args []string) error {
+	if len(args) <= 1 {
 		if cfgPath, err := tmaint.ConfigurationPath(); err != nil {
 			return err
 		} else {
-			fmt.Fprintf(os.Stderr, "Your configuration is saved on\n  %s\n", cfgPath)
+			defer fmt.Fprintf(os.Stderr, "Your configuration is saved on\n  %s\n", cfgPath)
 		}
-		return nil
 	}
+
 	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
 	if err != nil {
 		return err
 	}
 	defer api.Close()
 
-	subcommand1, ok := subcommands[args[0]]
-	if !ok {
-		return fmt.Errorf("%s: no such sub-command", args[0])
-	}
 	ctx, closer := ctrlc.Setup(context.Background())
-	rc := subcommand1.F(ctx, api, args[1:])
-	closer()
-	return rc
+
+	app := &cli.App{
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "editor",
+				Usage: "editor to post",
+			},
+		},
+		Commands: []*cli.Command{
+			&cli.Command{
+				Name:  "followers",
+				Usage: "list members you are followed",
+				Action: func(c *cli.Context) error {
+					return followings(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "followings",
+				Usage: "list members you follows",
+				Action: func(c *cli.Context) error {
+					return followings(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "follow",
+				Usage: "follow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)",
+				Action: func(c *cli.Context) error {
+					return follow(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "unfollow",
+				Usage: "unfollow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)",
+				Action: func(c *cli.Context) error {
+					return unfollow(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "dump",
+				Usage: "IDNum ... dump JSON for the tweet",
+				Action: func(c *cli.Context) error {
+					return dump(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "post",
+				Usage: "post tweet from STDIN",
+				Action: func(c *cli.Context) error {
+					return post(c, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "cont",
+				Usage: "post continued tweet from STDIN",
+				Action: func(c *cli.Context) error {
+					return cont(c, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "whoami",
+				Usage: "show who are you",
+				Action: func(c *cli.Context) error {
+					return whoami(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "timeline",
+				Usage: "get home timeline",
+				Action: func(c *cli.Context) error {
+					return timeline(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "mention",
+				Usage: "get mention timeline",
+				Action: func(c *cli.Context) error {
+					return mention(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "reply",
+				Usage: "IDNum ... reply to IDNum",
+				Action: func(c *cli.Context) error {
+					return reply(c, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "said",
+				Usage: "show what I said",
+				Action: func(c *cli.Context) error {
+					return said(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "retweet",
+				Usage: "IDNum",
+				Action: func(c *cli.Context) error {
+					return retweet(ctx, api, c.Args().Slice())
+				},
+			},
+			&cli.Command{
+				Name:  "view",
+				Usage: ".. start viewer",
+				Action: func(c *cli.Context) error {
+					return view(c, api, c.Args().Slice())
+				},
+			},
+		},
+	}
+	defer closer()
+	return app.Run(args)
 }
 
 func main() {
-	flag.Parse()
-	if err := main1(flag.Args()); err != nil {
+	if err := mains(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}

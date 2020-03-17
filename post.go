@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,9 +12,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
-	// "reflect"
 	"strconv"
+	"strings"
 
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/mattn/go-isatty"
@@ -25,11 +23,10 @@ import (
 
 var byteOrderMark = "\xEF\xBB\xBF"
 
-func post(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
-	return postWithValue(api, nil)
+func post(c StringFlag, api *anaconda.TwitterApi, args []string) error {
+	_, err := doPost(c, api, "", nil)
+	return err
 }
-
-var flagEditor = flag.String("editor", "", "editor to use")
 
 func makeDraft(text string) (string, error) {
 	fname := filepath.Join(os.TempDir(), "post.txt")
@@ -69,11 +66,6 @@ func dumpTwitterError(err error, w io.Writer) {
 	}
 }
 
-func postWithValue(api *tw.Api, values url.Values) error {
-	_, err := doPost(api, "", values)
-	return err
-}
-
 func _postWithEditor(api *tw.Api, editor string, draft string, values url.Values) (*anaconda.Tweet, error) {
 	fname, err := makeDraft(draft)
 	if err != nil {
@@ -103,16 +95,8 @@ func _postWithEditor(api *tw.Api, editor string, draft string, values url.Values
 	}
 }
 
-func postWithEditor(api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, error) {
-	editor := *flagEditor
-	if editor == "" {
-		editor = os.Getenv("EDITOR")
-	}
-	return _postWithEditor(api, editor, draft, values)
-}
-
-func doPost(api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, error) {
-	editor := *flagEditor
+func doPost(flags StringFlag, api *tw.Api, draft string, values url.Values) (*anaconda.Tweet, error) {
+	editor := flags.String("editor")
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
 	}
@@ -139,7 +123,7 @@ func myTimeline(api *anaconda.TwitterApi) ([]anaconda.Tweet, error) {
 	return api.GetUserTimeline(values)
 }
 
-func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
+func cont(c StringFlag, api *anaconda.TwitterApi, args []string) error {
 	timeline, err := myTimeline(api)
 	if err != nil {
 		return err
@@ -150,12 +134,13 @@ func cont(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	values := url.Values{}
 	values.Add("in_reply_to_status_id", strconv.FormatInt(timeline[0].Id, 10))
 
-	return postWithValue(api, values)
+	_, err = doPost(c, api, "", values)
+	return err
 }
 
 var rxSuffixID = regexp.MustCompile(`\d+$`)
 
-func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
+func reply(flags StringFlag, api *anaconda.TwitterApi, args []string) error {
 	if len(args) <= 0 {
 		return errors.New("required tweet ID")
 	}
@@ -182,7 +167,7 @@ func reply(ctx context.Context, api *anaconda.TwitterApi, args []string) error {
 	}
 	values := url.Values{}
 	values.Add("in_reply_to_status_id", m)
-	_, err = doPost(api, draft.String(), values)
+	_, err = doPost(flags, api, draft.String(), values)
 	return err
 }
 
