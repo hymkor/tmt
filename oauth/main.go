@@ -2,7 +2,6 @@ package tmaint
 
 import (
 	"encoding/json"
-	"flag"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -28,8 +27,6 @@ func FilePathChangeExtension(path, newext string) string {
 	}
 }
 
-var account = flag.String("a", "", "account json")
-
 func ConfigurationPath() (string, error) {
 	exename, err := os.Executable()
 	if err != nil {
@@ -38,11 +35,13 @@ func ConfigurationPath() (string, error) {
 	return FilePathChangeExtension(exename, ".json"), nil
 }
 
-func getAccess(consumerKey, consumerSecret string) (*accessT, error) {
-	var cfgname string
-	if *account != "" {
-		cfgname = *account
-	} else {
+type Flags interface {
+	String(name string) string
+}
+
+func getAccess(flags Flags, consumerKey, consumerSecret string) (*accessT, error) {
+	cfgname := flags.String("a")
+	if cfgname == "" {
 		var err error
 		cfgname, err = ConfigurationPath()
 		if err != nil {
@@ -77,8 +76,8 @@ func getAccess(consumerKey, consumerSecret string) (*accessT, error) {
 
 type Api = anaconda.TwitterApi
 
-func Login(consumerKey, consumerSecret string) (*Api, error) {
-	access, err := getAccess(consumerKey, consumerSecret)
+func Login(flags Flags, consumerKey, consumerSecret string) (*Api, error) {
+	access, err := getAccess(flags, consumerKey, consumerSecret)
 	if err != nil {
 		return nil, err
 	}

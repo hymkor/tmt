@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ChimeraCoder/anaconda"
 	"github.com/urfave/cli/v2"
 
 	"github.com/zetamatta/tmt/ctrlc"
@@ -21,13 +22,29 @@ func mains(args []string) error {
 		}
 	}
 
-	api, err := tmaint.Login(secret.ConsumerKey, secret.ConsumerSecret)
-	if err != nil {
-		return err
-	}
-	defer api.Close()
-
 	ctx, closer := ctrlc.Setup(context.Background())
+
+	action1 := func(f func(c context.Context, api *anaconda.TwitterApi, args []string) error) func(*cli.Context) error {
+		return func(c *cli.Context) error {
+			api, err := tmaint.Login(c, secret.ConsumerKey, secret.ConsumerSecret)
+			if err != nil {
+				return err
+			}
+			defer api.Close()
+			return f(ctx, api, c.Args().Slice())
+		}
+	}
+
+	action2 := func(f func(c StringFlag, api *anaconda.TwitterApi, args []string) error) func(*cli.Context) error {
+		return func(c *cli.Context) error {
+			api, err := tmaint.Login(c, secret.ConsumerKey, secret.ConsumerSecret)
+			if err != nil {
+				return err
+			}
+			defer api.Close()
+			return f(c, api, c.Args().Slice())
+		}
+	}
 
 	app := &cli.App{
 		Flags: []cli.Flag{
@@ -35,105 +52,81 @@ func mains(args []string) error {
 				Name:  "editor",
 				Usage: "editor to post",
 			},
+			&cli.StringFlag{
+				Name:  "a",
+				Usage: "accounnt",
+			},
 		},
 		Commands: []*cli.Command{
 			&cli.Command{
-				Name:  "followers",
-				Usage: "list members you are followed",
-				Action: func(c *cli.Context) error {
-					return followings(ctx, api, c.Args().Slice())
-				},
+				Name:   "followers",
+				Usage:  "list members you are followed",
+				Action: action1(followings),
 			},
 			&cli.Command{
-				Name:  "followings",
-				Usage: "list members you follows",
-				Action: func(c *cli.Context) error {
-					return followings(ctx, api, c.Args().Slice())
-				},
+				Name:   "followings",
+				Usage:  "list members you follows",
+				Action: action1(followings),
 			},
 			&cli.Command{
-				Name:  "follow",
-				Usage: "follow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)",
-				Action: func(c *cli.Context) error {
-					return follow(ctx, api, c.Args().Slice())
-				},
+				Name:   "follow",
+				Usage:  "follow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)",
+				Action: action1(follow),
 			},
 			&cli.Command{
-				Name:  "unfollow",
-				Usage: "unfollow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)",
-				Action: func(c *cli.Context) error {
-					return unfollow(ctx, api, c.Args().Slice())
-				},
+				Name:   "unfollow",
+				Usage:  "unfollow people listed in STDIN\n\t  (Write like @ScreenName, ignore others)",
+				Action: action1(unfollow),
 			},
 			&cli.Command{
-				Name:  "dump",
-				Usage: "IDNum ... dump JSON for the tweet",
-				Action: func(c *cli.Context) error {
-					return dump(ctx, api, c.Args().Slice())
-				},
+				Name:   "dump",
+				Usage:  "IDNum ... dump JSON for the tweet",
+				Action: action1(dump),
 			},
 			&cli.Command{
-				Name:  "post",
-				Usage: "post tweet from STDIN",
-				Action: func(c *cli.Context) error {
-					return post(c, api, c.Args().Slice())
-				},
+				Name:   "post",
+				Usage:  "post tweet from STDIN",
+				Action: action2(post),
 			},
 			&cli.Command{
-				Name:  "cont",
-				Usage: "post continued tweet from STDIN",
-				Action: func(c *cli.Context) error {
-					return cont(c, api, c.Args().Slice())
-				},
+				Name:   "cont",
+				Usage:  "post continued tweet from STDIN",
+				Action: action2(cont),
 			},
 			&cli.Command{
-				Name:  "whoami",
-				Usage: "show who are you",
-				Action: func(c *cli.Context) error {
-					return whoami(ctx, api, c.Args().Slice())
-				},
+				Name:   "whoami",
+				Usage:  "show who are you",
+				Action: action1(whoami),
 			},
 			&cli.Command{
-				Name:  "timeline",
-				Usage: "get home timeline",
-				Action: func(c *cli.Context) error {
-					return timeline(ctx, api, c.Args().Slice())
-				},
+				Name:   "timeline",
+				Usage:  "get home timeline",
+				Action: action1(timeline),
 			},
 			&cli.Command{
-				Name:  "mention",
-				Usage: "get mention timeline",
-				Action: func(c *cli.Context) error {
-					return mention(ctx, api, c.Args().Slice())
-				},
+				Name:   "mention",
+				Usage:  "get mention timeline",
+				Action: action1(mention),
 			},
 			&cli.Command{
-				Name:  "reply",
-				Usage: "IDNum ... reply to IDNum",
-				Action: func(c *cli.Context) error {
-					return reply(c, api, c.Args().Slice())
-				},
+				Name:   "reply",
+				Usage:  "IDNum ... reply to IDNum",
+				Action: action2(reply),
 			},
 			&cli.Command{
-				Name:  "said",
-				Usage: "show what I said",
-				Action: func(c *cli.Context) error {
-					return said(ctx, api, c.Args().Slice())
-				},
+				Name:   "said",
+				Usage:  "show what I said",
+				Action: action1(said),
 			},
 			&cli.Command{
-				Name:  "retweet",
-				Usage: "IDNum",
-				Action: func(c *cli.Context) error {
-					return retweet(ctx, api, c.Args().Slice())
-				},
+				Name:   "retweet",
+				Usage:  "IDNum",
+				Action: action1(retweet),
 			},
 			&cli.Command{
-				Name:  "view",
-				Usage: ".. start viewer",
-				Action: func(c *cli.Context) error {
-					return view(c, api, c.Args().Slice())
-				},
+				Name:   "view",
+				Usage:  "start viewer",
+				Action: action2(view),
 			},
 		},
 	}
