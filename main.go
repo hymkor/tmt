@@ -54,7 +54,7 @@ func mains(args []string) error {
 			},
 			&cli.StringFlag{
 				Name:  "a",
-				Usage: "accounnt",
+				Usage: "configuration file path",
 			},
 		},
 		Commands: []*cli.Command{
