@@ -196,8 +196,8 @@ const (
 	_ANSI_RESET     = "\x1B[0m"
 	_ANSI_YELLOW    = "\x1B[33;1m"
 	_ANSI_WHITE     = "\x1B[37;1m"
-	_ANSI_GREEN     = "\x1B[32m"
-	_ANSI_CYAN      = "\x1B[36m"
+	_ANSI_GREEN     = "\x1B[32;22m"
+	_ANSI_CYAN      = "\x1B[36;22m"
 	_ANSI_TITLE     = "\x1B]0;"
 	_ANSI_TITLE_END = "\007"
 )
