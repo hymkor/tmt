@@ -18,6 +18,6 @@ require (
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/zetamatta/go-termgap v0.0.0-20191117090052-034bc34d33c1 // indirect
 	github.com/zetamatta/go-twopane v0.0.0-20191117230549-3ea0b69950df
-	golang.org/x/net v0.0.0-20200501053045-e0ff5e5a1de5 // indirect
-	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3 // indirect
+	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
+	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9 // indirect
 )
