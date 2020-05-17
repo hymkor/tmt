@@ -20,7 +20,8 @@ exit /b
     set "GOARCH=%~2"
     for /F %%I in ('cd') do set "NAME=%%~nI"
     set "SUFFIX=%~3"
-    go build
+    go build -ldflags "-s -w"
+    upx "%NAME%%SUFFIX%"
     zip -9m "%NAME%-%DATE:/=%-%GOOS%-%GOARCH%.zip" "%NAME%%SUFFIX%"
     endlocal
     exit /b
