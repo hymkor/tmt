@@ -94,6 +94,14 @@ func (row *rowT) Contents(x interface{}) []string {
 	return row.contents
 }
 
+func (row *rowT) GetScreenName() string {
+	if row.RetweetedStatus != nil {
+		return row.RetweetedStatus.User.ScreenName
+	} else {
+		return row.User.ScreenName
+	}
+}
+
 const (
 	CTRL_M = "\x0D"
 	CTRL_R = "\x12"
@@ -443,7 +451,7 @@ func view(flags StringFlag, api *anaconda.TwitterApi, args []string) error {
 
 					draft := ""
 					if me == nil || me.Id != row.User.Id {
-						draft = fmt.Sprintf("@%s ", row.User.ScreenName)
+						draft = fmt.Sprintf("@%s ", row.GetScreenName())
 					}
 					values := url.Values{}
 					values.Add("in_reply_to_status_id", row.IdStr)
@@ -457,12 +465,7 @@ func view(flags StringFlag, api *anaconda.TwitterApi, args []string) error {
 			case CTRL_U:
 				if row, ok := param.View.Rows[param.Cursor].(*rowT); ok {
 					getTimeline.Backup = param.Rows
-					var screenName string
-					if row.RetweetedStatus != nil {
-						screenName = row.RetweetedStatus.User.ScreenName
-					} else {
-						screenName = row.User.ScreenName
-					}
+					screenName := row.GetScreenName()
 					getTimeline, ok = timelines[screenName]
 					if !ok {
 						getTimeline = &Timeline{
