@@ -12,12 +12,8 @@ require (
 	github.com/garyburd/go-oauth v0.0.0-20180319155456-bca2e7f09a17
 	github.com/mattn/go-colorable v0.1.6
 	github.com/mattn/go-isatty v0.0.12
-	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/mattn/go-tty v0.0.3 // indirect
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/urfave/cli/v2 v2.2.0
-	github.com/zetamatta/go-termgap v0.0.0-20191117090052-034bc34d33c1 // indirect
-	github.com/zetamatta/go-twopane v0.0.0-20191117230549-3ea0b69950df
-	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
-	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9 // indirect
+	github.com/zetamatta/go-twopane v0.0.0-20200520162315-80edb945d564
+	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7 // indirect
 )
