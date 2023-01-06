@@ -28,12 +28,24 @@ You have to write it into STDIN of tmt.exe.
 
 In STDIN, please write username like `@ScreenName` per one line.
 
-How to build
-------------
+Install
+-------
+
+Download via [Releases](https://github.com/hymkor/tmt/releases) and unzip.
+
+Or if you have scoop-installer,
 
 ```
-$ go get github.com/zetamatta/tmt
-$ cd ~/go/src/github.com/zetamatta/tmt
+scoop bucket add hymkor https://github.com/hymkor/scoop-bucket
+scoop install tmt
+```
+
+Build
+-----
+
+```
+$ go get github.com/hymkor/tmt
+$ cd ~/go/src/github.com/hymkor/tmt
 $ cd secret
 $ cp secret.go.sample secret.go
 $ vim secret.go
@@ -56,4 +68,4 @@ $ go build
 
 Author
 ------
-[@zetamatta](https://github.com/zetamatta/)
+[@hymkor](https://github.com/hymkor)
