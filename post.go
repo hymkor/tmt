@@ -18,7 +18,7 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/mattn/go-isatty"
 
-	tw "github.com/zetamatta/tmt/oauth"
+	tw "github.com/hymkor/tmt/oauth"
 )
 
 var byteOrderMark = "\xEF\xBB\xBF"

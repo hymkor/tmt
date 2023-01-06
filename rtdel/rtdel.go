@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	tmaint "github.com/zetamatta/tmt/oauth"
-	"github.com/zetamatta/tmt/secret"
+	tmaint "github.com/hymkor/tmt/oauth"
+	"github.com/hymkor/tmt/secret"
 )
 
 var from = flag.String("f", "", "ID that seek tweet from")

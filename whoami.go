@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	tw "github.com/zetamatta/tmt/oauth"
+	tw "github.com/hymkor/tmt/oauth"
 )
 
 func whoami(ctx context.Context, api *tw.Api, args []string) error {

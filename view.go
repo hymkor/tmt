@@ -15,7 +15,7 @@ import (
 	"github.com/mattn/go-colorable"
 	"github.com/toqueteos/webbrowser"
 
-	"github.com/zetamatta/go-twopane"
+	"github.com/hymkor/go-twopane"
 )
 
 func pasteUrl(buffer io.Writer, t *anaconda.Tweet) {

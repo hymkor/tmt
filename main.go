@@ -8,9 +8,9 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/urfave/cli/v2"
 
-	"github.com/zetamatta/tmt/ctrlc"
-	tmaint "github.com/zetamatta/tmt/oauth"
-	"github.com/zetamatta/tmt/secret"
+	"github.com/hymkor/tmt/ctrlc"
+	tmaint "github.com/hymkor/tmt/oauth"
+	"github.com/hymkor/tmt/secret"
 )
 
 func mains(args []string) error {

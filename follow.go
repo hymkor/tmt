@@ -12,8 +12,8 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/mattn/go-isatty"
 
-	"github.com/zetamatta/tmt/ctrlc"
-	tw "github.com/zetamatta/tmt/oauth"
+	"github.com/hymkor/tmt/ctrlc"
+	tw "github.com/hymkor/tmt/oauth"
 )
 
 var rxScreenName = regexp.MustCompile(`@\w+`)

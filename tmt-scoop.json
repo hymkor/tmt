@@ -1,0 +1,15 @@
+{
+    "version": "",
+    "description": "tmt - Twitter Maintenance Tool",
+    "homepage": "https://github.com/hymkor/tmt",
+    "license": "MIT License",
+    "architecture": {},
+    "bin": null,
+    "checkver": {
+        "github": "https://github.com/hymkor/tmt",
+        "regex": "tag/([\\d\\._]+)"
+    },
+    "autoupdate": {
+        "architecture": {}
+    }
+}

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/zetamatta/tmt/ctrlc"
-	tw "github.com/zetamatta/tmt/oauth"
+	"github.com/hymkor/tmt/ctrlc"
+	tw "github.com/hymkor/tmt/oauth"
 )
 
 var rxNumber = regexp.MustCompile(`\d+`)
